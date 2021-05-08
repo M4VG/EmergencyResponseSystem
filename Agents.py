@@ -10,14 +10,10 @@ class AgentType(Enum):
 
 class Agent:
 
-    def __init__(self, agentType, grid, position, numberOfUnits):
-        self.grid = grid
+    def __init__(self, agentType, position, numberOfUnits):
         self.type = agentType
         self.position = position # position on the grid
         self.units = [ResponseUnit(agentType, position) for i in range(numberOfUnits)] # array of units
-
-        self.grid.addDispatcher(self)
-
 
     def sendUnits(self, numberOfUnits, targetPosition):
         pass
@@ -25,20 +21,20 @@ class Agent:
 
 class FireStation(Agent):
 
-    def __init__(self, grid, position, numberOfUnits):
-        Agent.__init__(self, AgentType.FIRE, grid, position, numberOfUnits)
+    def __init__(self, position, numberOfUnits):
+        Agent.__init__(self, AgentType.FIRE, position, numberOfUnits)
 
 
 class Hospital(Agent):
 
-    def __init__(self, grid, position, numberOfUnits):
-        Agent.__init__(self, AgentType.MEDICAL, grid, position, numberOfUnits)
+    def __init__(self, position, numberOfUnits):
+        Agent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
 
 
 class PoliceStation(Agent):
 
-    def __init__(self, grid, position, numberOfUnits):
-        Agent.__init__(self, AgentType.POLICE, grid, position, numberOfUnits)
+    def __init__(self, position, numberOfUnits):
+        Agent.__init__(self, AgentType.POLICE, position, numberOfUnits)
 
 
 class ResponseUnit:
