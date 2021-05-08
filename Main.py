@@ -2,6 +2,7 @@ import random
 from Grid import Grid
 from Agents import *
 from Emergency import Emergency
+from GUI import GUI
 
 # main function - create grid and agents, function step to advance time
 
@@ -63,9 +64,9 @@ generateAgents(fireStations, FireStation)
 generateAgents(hospitals, Hospital)
 generateAgents(policeStations, PoliceStation)
 
-#guiInstance = GUI(grid)
-#guiInstance.mainloop()
+# printGrid()
+# step()
+# printGrid()
 
-printGrid()
-step()
-printGrid()
+guiInstance = GUI(grid, step)
+guiInstance.window.mainloop()
