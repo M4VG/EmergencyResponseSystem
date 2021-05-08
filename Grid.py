@@ -20,6 +20,10 @@ class Grid:
         self.answeredEmergencies = []
         self.expiredEmergencies = []
 
+    
+    def getAllAgents(self):
+        return self.fireStations + self.hospitals + self.policeStations
+
 
     def positionInBounds(self, position):
         return all(x >= 0 for x in position) and all(x < y for x, y in zip(position, self.size))

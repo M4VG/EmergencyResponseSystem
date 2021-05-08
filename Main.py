@@ -2,6 +2,7 @@ import random
 from Grid import Grid
 from Agents import *
 from Emergency import Emergency
+from GUI import GUI
 
 # main function - create grid and agents, function step to advance time
 
@@ -25,6 +26,7 @@ def step():
         grid.addEmergency(emergency)
         print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
     grid.step()
+    printGrid()
     
 
 def printGrid():
@@ -65,12 +67,8 @@ generateAgents(fireStations, FireStation)
 generateAgents(hospitals, Hospital)
 generateAgents(policeStations, PoliceStation)
 
-#guiInstance = GUI(grid)
-#guiInstance.mainloop()
-
 printGrid()
+print('> Press space ingame to step')
 
-while (True):
-    input('> Enter to step ')
-    step()
-    printGrid()
+guiInstance = GUI(grid, step)
+guiInstance.window.mainloop()
