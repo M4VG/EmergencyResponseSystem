@@ -51,6 +51,6 @@ class Grid:
             self.policeStations.append(dispatcher)
 
     def addEmergency(self, emergency):
-        self.occupyPosition(dispatcher.position)
-        self.activeEmergencies.add(emergency)
+        self.occupyPosition(emergency.position)
+        self.activeEmergencies.append(emergency)
     

@@ -17,7 +17,7 @@ def generateAgents(numAgents, constructor):
         grid.addDispatcher(agent)
 
 def step():
-    emergencies = random.randint(0, MAXEMERGENCIES)
+    emergencies = random.randint(1, MAXEMERGENCIES)
     for _ in range(emergencies):
         position = grid.getFreePostition()
         t = random.randint(1, 3) # only simple ones for now
@@ -48,7 +48,7 @@ print('\nWelcome to our high tech multi agent Emergency Reponse System!')
 print('\nWhat size do you want for the squared grid today?')
 side = int( input('> length of side: ') )
 
-print('\nAnd how many agents should I spawn? Max.', MAXAGENTS, 'agent total')
+print('\nAnd how many agents should I spawn? Max.', MAXAGENTS, 'agents total')
 fireStations = int( input('> number of fire stations: ') )
 hospitals = int( input('> number of hospitals: ') )
 policeStations = int( input('> number of police stations: ') )
@@ -66,4 +66,6 @@ generateAgents(policeStations, PoliceStation)
 #guiInstance = GUI(grid)
 #guiInstance.mainloop()
 
+printGrid()
+step()
 printGrid()
