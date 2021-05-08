@@ -20,6 +20,9 @@ class Grid:
         self.answeredEmergencies = []
         self.expiredEmergencies = []
 
+        # units
+        self.units = []
+
     
     def getAllAgents(self):
         return self.fireStations + self.hospitals + self.policeStations
@@ -34,7 +37,12 @@ class Grid:
     def makeRandomPosition(self):
         return tuple(random.randint(0, x-1) for x in self.size)
 
-    def getFreePosition(self): #FIXME when its full
+    def fullBoard(self):
+        return all([all(x) for x in self.grid])
+
+    def getFreePosition(self):
+        if self.fullBoard():
+            return None
         pos = self.makeRandomPosition()
         while (not self.positionFree(pos)):
             pos = self.makeRandomPosition()
@@ -77,6 +85,9 @@ class Grid:
     def addEmergency(self, emergency):
         self.occupyPosition(emergency.position)
         self.activeEmergencies.append(emergency)
+
+    def addUnit(self, unit):
+        self.units.append(unit)
     
     def step(self):
         # step agents
