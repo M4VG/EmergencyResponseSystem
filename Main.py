@@ -11,19 +11,21 @@ MAXAGENTS = 3
 
 def generateAgents(numAgents, constructor):
     for _ in range(numAgents):
-        position = grid.getFreePostition()
+        position = grid.getFreePosition()
         numUnits = random.randint(1, MAXUNITS)
         agent = constructor(position, numUnits)
         grid.addDispatcher(agent)
 
 def step():
-    emergencies = random.randint(1, MAXEMERGENCIES)
+    emergencies = random.randint(0, MAXEMERGENCIES)
     for _ in range(emergencies):
-        position = grid.getFreePostition()
+        position = grid.getFreePosition()
         t = random.randint(1, 3) # only simple ones for now
         emergency = Emergency(position, fire=(t==1), medical=(t==2), police=(t==3)) # default severity and time limit
         grid.addEmergency(emergency)
-    # call agent decision for all agents
+        print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
+    grid.step()
+    
 
 def printGrid():
     print('\n====== GRID STATUS ======\n')
@@ -67,5 +69,8 @@ generateAgents(policeStations, PoliceStation)
 #guiInstance.mainloop()
 
 printGrid()
-step()
-printGrid()
+
+while (True):
+    input('> Enter to step ')
+    step()
+    printGrid()

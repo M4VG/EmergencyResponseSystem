@@ -22,7 +22,7 @@ class Grid:
 
 
     def positionInBounds(self, position):
-        return all(x < y for x, y in zip(position, self.size))
+        return all(x >= 0 for x in position) and all(x < y for x, y in zip(position, self.size))
 
     def positionFree(self, position):
         return not self.grid[position[0]][position[1]]
@@ -30,7 +30,7 @@ class Grid:
     def makeRandomPosition(self):
         return tuple(random.randint(0, x-1) for x in self.size)
 
-    def getFreePostition(self):
+    def getFreePosition(self): #FIXME when its full
         pos = self.makeRandomPosition()
         while (not self.positionFree(pos)):
             pos = self.makeRandomPosition()
@@ -41,6 +41,9 @@ class Grid:
         assert self.positionFree(position)
         self.grid[position[0]][position[1]] = True
 
+    def clearPosition(self, position):
+        self.grid[position[0]][position[1]] = False
+
     def addDispatcher(self, dispatcher):
         self.occupyPosition(dispatcher.position)
         if (dispatcher.type == AgentType.FIRE):
@@ -50,7 +53,46 @@ class Grid:
         elif (dispatcher.type == AgentType.POLICE):
             self.policeStations.append(dispatcher)
 
+
+    def findNearestAgent(self, emergency, agents): #FIXME nearest not first!
+        for agent in agents:
+            if agent.canHelp(emergency):
+                return agent
+        return None
+
+    def contactAgents(self, emergency):
+        fire = self.findNearestAgent(emergency, self.fireStations)
+        hospital = self.findNearestAgent(emergency, self.hospitals)
+        police = self.findNearestAgent(emergency, self.policeStations)
+        if fire != None and hospital != None and police != None:
+            fire.sendUnits(emergency)
+            hospital.sendUnits(emergency)
+            police.sendUnits(emergency)
+            emergency.assigned = True
+
     def addEmergency(self, emergency):
         self.occupyPosition(emergency.position)
         self.activeEmergencies.append(emergency)
     
+    def step(self):
+        # step agents
+        for fireStation in self.fireStations:
+            fireStation.step()
+        for hospital in self.hospitals:
+            hospital.step()
+        for policeStation in self.policeStations:
+            policeStation.step()
+
+        # check for answered emergencies
+        for emergency in self.activeEmergencies:
+            if emergency.isAnswered():
+                self.activeEmergencies.remove(emergency)
+                self.answeredEmergencies.append(emergency)
+                self.clearPosition(emergency.position)
+
+        # check for unassigned emergencies
+        for emergency in self.activeEmergencies:
+            if not emergency.assigned:
+                self.contactAgents(emergency)
+
+        # TODO check for expired emergencies
