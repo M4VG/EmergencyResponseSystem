@@ -7,24 +7,6 @@ import sys
 
 # main function - create grid and agents, function step to advance time
 
-MAXUNITS = 1
-MAXEMERGENCIES = 1
-MAXAGENTS = 3
-
-
-'''
-def generateAgents(numAgents, constructor):
-    for _ in range(numAgents):
-        position = grid.getFreePosition()
-        if position is None:
-            sys.exit('Board is full')
-        numUnits = random.randint(1, MAXUNITS)
-        agent = constructor(position, numUnits)
-        grid.addDispatcher(agent)
-        for unit in agent.units:
-            grid.addUnit(unit)
-'''
-
 
 def addAgent(agent):
     if grid.fullBoard():
@@ -34,7 +16,7 @@ def addAgent(agent):
 
 
 def step():
-    emergencies = 1 if random.random() < 0.3 else 0 # random.randint(0, MAXEMERGENCIES)
+    emergencies = 1 if random.random() < 0.3 else 0
     for _ in range(emergencies):
         position = grid.getFreePosition()
         if position is None:
@@ -64,29 +46,10 @@ def printGrid():
     print('\n=========================\n')
 
 
-'''
-print('\nWelcome to our high tech multi agent Emergency Reponse System!')
+# --------------- Main program execution --------------- #
 
-print('\nWhat size do you want for the squared grid today?')
-side = int( input('> length of side: ') )
-
-print('\nAnd how many agents should I spawn? Max.', MAXAGENTS, 'agents total')
-fireStations = int( input('> number of fire stations: ') )
-hospitals = int( input('> number of hospitals: ') )
-policeStations = int( input('> number of police stations: ') )
-print()
-'''
-
+# create grid and agents
 grid = Grid(10, 10)
-
-fireStations = hospitals = policeStations = 2
-numAgents = fireStations + hospitals + policeStations
-# assert numAgents > 0 and numAgents <= MAXAGENTS
-
-# generateAgents(fireStations, FireStation)
-# generateAgents(hospitals, Hospital)
-# generateAgents(policeStations, PoliceStation)
-
 addAgent(FireStation((2, 3), 3))
 addAgent(FireStation((7, 8), 5))
 addAgent(Hospital((4, 1), 4))
@@ -97,5 +60,6 @@ addAgent(PoliceStation((1, 6), 4))
 printGrid()
 print('> Press space ingame to step')
 
+# create GUI
 guiInstance = GUI(grid, step)
 guiInstance.window.mainloop()

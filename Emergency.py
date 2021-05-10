@@ -6,10 +6,10 @@ class Emergency:
 
     UNITSPERSEVERITY = 1
 
-    def __init__(self, position, fire=False, medical=False, police=False, severityLevel=1, timeLimit=100):
+    def __init__(self, position, fire=False, medical=False, police=False, severityLevel=1, stepLimit=10):
         self.position = position
         self.severityLevel = severityLevel
-        self.timeLimit = timeLimit
+        self.stepsRemaining = stepLimit
 
         # needed units depends on severity level
         neededUnits = severityLevel * self.UNITSPERSEVERITY
@@ -35,8 +35,14 @@ class Emergency:
         elif agentType == AgentType.POLICE:
             return self.police
 
+    def isAssigned(self):
+        return self.assigned
+
     def isAnswered(self):
         return self.fire == 0 and self.medical == 0 and self.police == 0
+
+    def isExpired(self):
+        return self.stepsRemaining <= 0
 
     def help(self, unit):
         if unit.type == AgentType.FIRE and self.fire > 0:
@@ -45,3 +51,6 @@ class Emergency:
             self.medical -= 1
         elif unit.type == AgentType.POLICE and self.police > 0:
             self.police -= 1
+
+    def step(self):
+        self.stepsRemaining -= 1

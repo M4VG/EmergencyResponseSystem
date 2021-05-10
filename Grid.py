@@ -21,9 +21,6 @@ class Grid:
         self.answeredEmergencies = []
         self.expiredEmergencies = []
 
-        # units
-        # self.units = []     # needed?
-
     def getAllAgents(self):
         return self.fireStations + self.hospitals + self.policeStations
 
@@ -104,7 +101,7 @@ class Grid:
     def contactAgents(self, emergency):
         nearestAgents = self.findNearestAgents(emergency)
         for agent in nearestAgents:
-            if agent is not None and agent.canHelp():
+            if agent is not None and agent.canHelp(emergency):
                 agent.sendUnits(emergency)
                 emergency.assigned = True
 
@@ -113,10 +110,6 @@ class Grid:
         self.activeEmergencies.append(emergency)
     
     def step(self):
-        # step agents
-        for agent in self.getAllAgents():
-            agent.step()
-
         for emergency in self.activeEmergencies:
             # check for answered emergencies
             if emergency.isAnswered():
@@ -125,7 +118,20 @@ class Grid:
                 self.clearPosition(emergency.position)
 
             # check for unassigned emergencies
-            elif not emergency.assigned:
+            elif not emergency.isAssigned():
                 self.contactAgents(emergency)
+                emergency.step()
 
-            # TODO check for expired emergencies
+            # check for expired emergencies
+            elif emergency.isExpired():
+                self.activeEmergencies.remove(emergency)
+                self.expiredEmergencies.append(emergency)
+                self.clearPosition(emergency.position)
+
+            # decrement remaining steps
+            else:
+                emergency.step()
+
+        # step agents
+        for agent in self.getAllAgents():
+            agent.step()
