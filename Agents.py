@@ -12,31 +12,29 @@ class Agent:
 
     def __init__(self, agentType, position, numberOfUnits):
         self.type = agentType
-        self.position = position # position on the grid
-        self.units = [ResponseUnit(agentType, position) for i in range(numberOfUnits)] # array of units
+        self.position = position    # position on the grid
+        self.units = [ResponseUnit(agentType, position) for i in range(numberOfUnits)]  # array of units
 
     def findFreeUnits(self):
         units = []
         for unit in self.units:
-            if unit.isFree(): units.append(unit)
+            if unit.isFree():
+                units.append(unit)
         return units
 
-    def getNeededUnits(self, emergency):
-        pass
-
     def canHelp(self, emergency):
-        neededUnits = self.getNeededUnits(emergency)
+        neededUnits = emergency.getNeededUnits(self.type)
         units = self.findFreeUnits()
         if len(units) < neededUnits:
-            return False # not enough units available
+            return False    # not enough units available
         else:
             return True
 
     def sendUnits(self, emergency):
-        neededUnits = self.getNeededUnits(emergency)
+        neededUnits = emergency.getNeededUnits(self.type)
         units = self.findFreeUnits()
         if len(units) < neededUnits:
-            return # not enough units available
+            return  # not enough units available
         for i in range(neededUnits):
             units[i].setEmergency(emergency)
 
@@ -45,14 +43,10 @@ class Agent:
             unit.step()
                 
 
-
 class FireStation(Agent):
 
     def __init__(self, position, numberOfUnits):
         Agent.__init__(self, AgentType.FIRE, position, numberOfUnits)
-
-    def getNeededUnits(self, emergency):
-        return emergency.fire
 
 
 class Hospital(Agent):
@@ -60,17 +54,11 @@ class Hospital(Agent):
     def __init__(self, position, numberOfUnits):
         Agent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
 
-    def getNeededUnits(self, emergency):
-        return emergency.medical
-
 
 class PoliceStation(Agent):
 
     def __init__(self, position, numberOfUnits):
         Agent.__init__(self, AgentType.POLICE, position, numberOfUnits)
-
-    def getNeededUnits(self, emergency):
-        return emergency.police
 
 
 class ResponseUnit:
@@ -85,14 +73,25 @@ class ResponseUnit:
         return not self.isFree()
 
     def isFree(self):
-        return self.currentPosition == self.homePosition and self.goalEmergency == None
+        return self.currentPosition == self.homePosition and self.goalEmergency is None
 
     def setEmergency(self, emergency):
-        assert self.goalEmergency == None
+        assert self.goalEmergency is None
         self.goalEmergency = emergency
 
     def reachedEmergency(self):
-        return self.goalEmergency != None and self.currentPosition == self.goalEmergency.position
+        return self.goalEmergency is not None and self.currentPosition == self.goalEmergency.position
+
+    def help(self):
+        self.goalEmergency.help(self)
+
+    def getGoalPosition(self):
+        if self.goalEmergency is not None:
+            return self.goalEmergency.position
+        else:
+            return self.homePosition
+
+    # -------------- MOBILITY FUNCTIONS -------------- #
 
     def moveRight(self):
         self.currentPosition = (self.currentPosition[0] + 1, self.currentPosition[1])
@@ -106,16 +105,10 @@ class ResponseUnit:
     def moveDown(self):
         self.currentPosition = (self.currentPosition[0], self.currentPosition[1] - 1)
 
-    def getGoalPosition(self):
-        if self.goalEmergency != None:
-            return self.goalEmergency.position
-        else:
-            return self.homePosition
-
     def step(self):
         if self.isActive():
             if self.reachedEmergency():
-                self.goalEmergency.help(self)
+                self.help()
                 self.goalEmergency = None
             
             else:
@@ -131,5 +124,3 @@ class ResponseUnit:
                     self.moveUp()
                 elif distanceY < 0:
                     self.moveDown()
-
-            

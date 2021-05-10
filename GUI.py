@@ -1,22 +1,19 @@
+from typing import Callable
 
-from typing    import Callable
-
-from tkinter   import *
+from tkinter import *
 
 from Emergency import Emergency
-from Grid      import Grid
-from Agents    import *
-
+from Grid import Grid
+from Agents import *
 
 # Colors
-BLACK      = '#000000'
-DARK_GREY  = '#565656'
-LIGHT_RED  = '#EE7E77'
+BLACK = '#000000'
+DARK_GREY = '#565656'
+LIGHT_RED = '#EE7E77'
 LIGHT_BLUE = '#67B0CF'
 
 # Constants
-EMERGENCY_FREQUENCY = 2 * 1000 # 2 Seconds
-
+EMERGENCY_FREQUENCY = 2 * 1000  # 2 Seconds
 
 
 class GUI:
@@ -28,7 +25,7 @@ class GUI:
     def __init__(self, grid: Grid, stepFunction: Callable, screenSize=600):
         self.grid = grid
         self.emergencyObjects = []
-        self.unitObjects      = []
+        self.unitObjects = []
 
         self.screenSize = screenSize
         self.window = Tk()
@@ -41,7 +38,6 @@ class GUI:
         self.drawBoard()
         self.updateBoard()
         self.window.bind('<space>', self.step)
-
 
     def drawBoard(self):
         rows, columns = self.grid.size
@@ -64,12 +60,10 @@ class GUI:
 
         self.drawDispatchers()
 
-
     def drawDispatchers(self):
         for dispatcher in self.grid.getAllAgents():
             self.placeDispatcher(dispatcher)
-    
-    
+
     # ------------------------------------------------------------------
     # Drawing Functions:
     # The modules required to draw required game based object on canvas
@@ -78,36 +72,35 @@ class GUI:
     def placeUnit(self, unit: ResponseUnit):
         rows, columns = self.grid.size
         rowHeight = int(self.screenSize / rows)
-        colWidth  = int(self.screenSize / columns)
+        colWidth = int(self.screenSize / columns)
 
         # Top-Left
-        x1 = unit.currentPosition[0] * rowHeight + rowHeight/3
-        y1 = unit.currentPosition[1] * colWidth + rowHeight/3
+        x1 = unit.currentPosition[0] * rowHeight + rowHeight / 3
+        y1 = unit.currentPosition[1] * colWidth + rowHeight / 3
         # Bottom-Right
-        x2 = x1 + rowHeight - 2*(rowHeight/3)
-        y2 = y1 + colWidth - 2*(rowHeight/3)
+        x2 = x1 + rowHeight - 2 * (rowHeight / 3)
+        y2 = y1 + colWidth - 2 * (rowHeight / 3)
 
         self.unitObjects.append((
             self.canvas.create_rectangle(y1, x1, y2, x2, fill=DARK_GREY),
-            self.canvas.create_text((y1+y2)/2, (x1+x2)/2, text=self.agentText(unit.type)),
+            self.canvas.create_text((y1 + y2) / 2, (x1 + x2) / 2, text=self.agentText(unit.type)),
         ))
 
     def agentText(self, agent):
         # FIXME : substitute with Agent toString method -> def __str__(self):
-        if (agent == AgentType.FIRE):
-            return 'F' # Fire Station
-        elif (agent == AgentType.MEDICAL):
-            return 'H' # Hospital
-        elif (agent == AgentType.POLICE):
-            return 'P' # Police Station
+        if agent == AgentType.FIRE:
+            return 'F'  # Fire Station
+        elif agent == AgentType.MEDICAL:
+            return 'H'  # Hospital
+        elif agent == AgentType.POLICE:
+            return 'P'  # Police Station
         else:
-            return '?' # Unknown
-
+            return '?'  # Unknown
 
     def placeEmergency(self, emergency: Emergency):
         rows, columns = self.grid.size
         rowHeight = int(self.screenSize / rows)
-        colWidth  = int(self.screenSize / columns)
+        colWidth = int(self.screenSize / columns)
 
         # Top-Left
         x1 = emergency.position[0] * rowHeight
@@ -120,11 +113,10 @@ class GUI:
             self.canvas.create_rectangle(y1, x1, y2, x2, fill=LIGHT_RED)
         )
 
-
     def placeDispatcher(self, dispatcher: Agent):
         rows, columns = self.grid.size
         rowHeight = int(self.screenSize / rows)
-        colWidth  = int(self.screenSize / columns)
+        colWidth = int(self.screenSize / columns)
 
         # Top-Left
         x1 = dispatcher.position[0] * rowHeight
@@ -134,21 +126,8 @@ class GUI:
         y2 = y1 + colWidth
 
         self.canvas.create_rectangle(y1, x1, y2, x2, fill=LIGHT_BLUE)
-        self.canvas.create_text((y1+y2)/2, (x1+x2)/2, text=self.agentText(dispatcher.type))
-        
+        self.canvas.create_text((y1 + y2) / 2, (x1 + x2) / 2, text=self.agentText(dispatcher.type))
 
-    def agentText(self, agent: AgentType):
-        # FIXME : substitute with Agent toString method -> def __str__(self):
-        if (agent == AgentType.FIRE):
-            return 'F' # Fire Station
-        elif (agent == AgentType.MEDICAL):
-            return 'H' # Hospital
-        elif (agent == AgentType.POLICE):
-            return 'P' # Police Station
-        else:
-            return '?' # Unknown
-
-    
     # ------------------------------------------------------------------
     # Logical Functions:
     # The modules required to carry out game logic
@@ -157,7 +136,6 @@ class GUI:
     def step(self, key=None):
         self.stepFunction()
         self.updateBoard()
-        
 
     def updateBoard(self):
         # Re-draw emergencies every step
@@ -170,6 +148,7 @@ class GUI:
         for unit in self.unitObjects:
             self.canvas.delete(unit[0])
             self.canvas.delete(unit[1])
-        for unit in self.grid.units:
-            if unit.isActive():
-                self.placeUnit(unit)
+        for agent in self.grid.getAllAgents():
+            for unit in agent.units:
+                if unit.isActive():
+                    self.placeUnit(unit)
