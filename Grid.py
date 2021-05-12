@@ -62,8 +62,6 @@ class Grid:
             self.policeStations.append(dispatcher)
 
     def findNearestAgents(self, emergency):
-        # doesnt matter if it can help or not, only considers the nearest (for now)
-
         nearestAgents = [None, None, None]
 
         # fire stations
@@ -99,11 +97,12 @@ class Grid:
         return nearestAgents
 
     def contactAgents(self, emergency):
+        # assign emergency to nearest agent of each type
         nearestAgents = self.findNearestAgents(emergency)
         for agent in nearestAgents:
-            if agent is not None and agent.canHelp(emergency):
-                agent.sendUnits(emergency)
-                emergency.assigned = True
+            if agent is not None:
+                agent.assignEmergency(emergency)
+        emergency.assigned = True
 
     def addEmergency(self, emergency):
         self.occupyPosition(emergency.position)
@@ -117,18 +116,18 @@ class Grid:
                 self.answeredEmergencies.append(emergency)
                 self.clearPosition(emergency.position)
 
-            # check for unassigned emergencies
-            elif not emergency.isAssigned():
-                self.contactAgents(emergency)
-                emergency.step()
-
             # check for expired emergencies
             elif emergency.isExpired():
                 self.activeEmergencies.remove(emergency)
                 self.expiredEmergencies.append(emergency)
                 self.clearPosition(emergency.position)
 
-            # decrement remaining steps
+            # check for unassigned emergencies
+            elif not emergency.isAssigned():
+                self.contactAgents(emergency)
+                emergency.step()
+
+            # decrement remaining steps for already assigned emergencies
             else:
                 emergency.step()
 

@@ -8,12 +8,19 @@ class AgentType(Enum):
     POLICE = 3
 
 
+# ------------------ General agent class ------------------ #
+
 class Agent:
 
     def __init__(self, agentType, position, numberOfUnits):
         self.type = agentType
         self.position = position    # position on the grid
         self.units = [ResponseUnit(agentType, position) for i in range(numberOfUnits)]  # array of units
+        self.assignedEmergencies = []       # new emergencies assigned to agent
+        self.dispatchedEmergencies = []     # emergencies already responded to (sent units)
+
+    def assignEmergency(self, emergency):
+        self.assignedEmergencies.append(emergency)
 
     def findFreeUnits(self):
         units = []
@@ -22,26 +29,59 @@ class Agent:
                 units.append(unit)
         return units
 
-    def canHelp(self, emergency):
-        neededUnits = emergency.getNeededUnits(self.type)
-        units = self.findFreeUnits()
-        if len(units) < neededUnits:
-            return False    # not enough units available
-        else:
-            return True
+    # --------------- Actuators --------------- #
 
-    def sendUnits(self, emergency):
-        neededUnits = emergency.getNeededUnits(self.type)
+    def sendUnits(self, emergency, numberOfUnits):
         units = self.findFreeUnits()
-        if len(units) < neededUnits:
-            return  # not enough units available
-        for i in range(neededUnits):
+        for i in range(numberOfUnits):
             units[i].setEmergency(emergency)
+            emergency.help(units[i])    # decrement needed units
 
-    def step(self):    
+    def retrieveUnits(self, emergency):
+        for unit in self.units:
+            if unit.goalEmergency == emergency:
+                unit.retrieve()
+
+    # ------------ Main agent cycle ------------ #
+
+    def step(self):
+
+        for emergency in self.assignedEmergencies:
+            # check for expired emergencies
+            if emergency.isExpired():
+                self.dispatchedEmergencies.remove(emergency)
+                self.retrieveUnits(emergency)
+
+        for emergency in self.dispatchedEmergencies:
+            # check for answered emergencies
+            if emergency.isAnswered():
+                self.dispatchedEmergencies.remove(emergency)
+
+            # check for expired emergencies
+            if emergency.isExpired():
+                self.dispatchedEmergencies.remove(emergency)
+                self.retrieveUnits(emergency)
+
+        # send available units to assigned emergencies
+        numFreeUnits = len(self.findFreeUnits())
+        while numFreeUnits > 0 and len(self.assignedEmergencies) > 0:
+            emergency = self.assignedEmergencies[0]
+            numNeededUnits = emergency.getNeededUnits(self.type)
+
+            if numFreeUnits < numNeededUnits:
+                self.sendUnits(emergency, numFreeUnits)
+                numFreeUnits = 0
+            else:
+                self.sendUnits(emergency, numNeededUnits)
+                numFreeUnits -= numNeededUnits
+                self.assignedEmergencies.remove(emergency)
+                self.dispatchedEmergencies.append(emergency)
+
         for unit in self.units:
             unit.step()
-                
+
+
+# ----------------- Specific agent classes ----------------- #
 
 class FireStation(Agent):
 
@@ -61,6 +101,8 @@ class PoliceStation(Agent):
         Agent.__init__(self, AgentType.POLICE, position, numberOfUnits)
 
 
+# ------------------ Response unit class ------------------ #
+
 class ResponseUnit:
 
     def __init__(self, unitType, homePosition):
@@ -79,11 +121,11 @@ class ResponseUnit:
         assert self.goalEmergency is None
         self.goalEmergency = emergency
 
+    def retrieve(self):
+        self.goalEmergency = None
+
     def reachedEmergency(self):
         return self.goalEmergency is not None and self.currentPosition == self.goalEmergency.position
-
-    def help(self):
-        self.goalEmergency.help(self)
 
     def getGoalPosition(self):
         if self.goalEmergency is not None:
@@ -91,7 +133,7 @@ class ResponseUnit:
         else:
             return self.homePosition
 
-    # -------------- MOBILITY FUNCTIONS -------------- #
+    # -------------- Mobility functions -------------- #
 
     def moveRight(self):
         self.currentPosition = (self.currentPosition[0] + 1, self.currentPosition[1])
@@ -108,7 +150,7 @@ class ResponseUnit:
     def step(self):
         if self.isActive():
             if self.reachedEmergency():
-                self.help()
+                self.goalEmergency.answer()
                 self.goalEmergency = None
             
             else:
