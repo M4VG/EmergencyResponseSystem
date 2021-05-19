@@ -5,15 +5,13 @@ from tkinter import *
 from Emergency import Emergency
 from Grid import Grid
 from Agents import *
+import time
 
 # Colors
 BLACK = '#000000'
 DARK_GREY = '#565656'
 LIGHT_RED = '#EE7E77'
 LIGHT_BLUE = '#67B0CF'
-
-# Constants
-EMERGENCY_FREQUENCY = 2 * 1000  # 2 Seconds
 
 
 class GUI:
@@ -22,7 +20,7 @@ class GUI:
     # Initialization Functions:
     # ------------------------------------------------------------------
 
-    def __init__(self, grid: Grid, stepFunction: Callable, screenSize=600):
+    def __init__(self, grid: Grid, screenSize=600):
         self.grid = grid
         self.emergencyObjects = []
         self.unitObjects = []
@@ -34,10 +32,8 @@ class GUI:
         self.canvas.pack()
         self.window.resizable(False, False)
 
-        self.stepFunction = stepFunction
         self.drawBoard()
         self.updateBoard()
-        self.window.bind('<space>', self.step)
 
     def drawBoard(self):
         rows, columns = self.grid.size
@@ -60,6 +56,10 @@ class GUI:
 
         self.drawDispatchers()
 
+        for agent in self.grid.getAllAgents():
+            for unit in agent.units:
+                self.placeUnit(unit)
+
     def drawDispatchers(self):
         for dispatcher in self.grid.getAllAgents():
             self.placeDispatcher(dispatcher)
@@ -75,8 +75,10 @@ class GUI:
         colWidth = int(self.screenSize / columns)
 
         # Top-Left
-        x1 = unit.currentPosition[0] * rowHeight + rowHeight / 3
-        y1 = unit.currentPosition[1] * colWidth + rowHeight / 3
+        pos = unit.getCurrentPosition()
+        x1 = pos[0] * rowHeight + rowHeight / 3
+        y1 = pos[1] * colWidth + rowHeight / 3
+
         # Bottom-Right
         x2 = x1 + rowHeight - 2 * (rowHeight / 3)
         y2 = y1 + colWidth - 2 * (rowHeight / 3)
@@ -121,6 +123,7 @@ class GUI:
         # Top-Left
         x1 = dispatcher.position[0] * rowHeight
         y1 = dispatcher.position[1] * colWidth
+
         # Bottom-Right
         x2 = x1 + rowHeight
         y2 = y1 + colWidth
@@ -133,22 +136,28 @@ class GUI:
     # The modules required to carry out game logic
     # ------------------------------------------------------------------
 
-    def step(self, key=None):
-        self.stepFunction()
-        self.updateBoard()
-
     def updateBoard(self):
+        start = time.time()
+
         # Re-draw emergencies every step
+        active = self.grid.activeEmergencies
+        # emergencies = list(filter(lambda e: e., self.emergencyObjects))
         for emergency in self.emergencyObjects:
             self.canvas.delete(emergency)
         for emergency in self.grid.activeEmergencies:
             self.placeEmergency(emergency)
 
-        # Re-draw units every step
-        for unit in self.unitObjects:
-            self.canvas.delete(unit[0])
-            self.canvas.delete(unit[1])
-        for agent in self.grid.getAllAgents():
-            for unit in agent.units:
-                if unit.isActive():
-                    self.placeUnit(unit)
+        end = time.time()
+        delta1 = end - start
+        print("d1:", delta1)
+
+        # move units
+        #for unit in self.unitObjects:
+        #    self.canvas.move(unit[0], )
+        #    self.canvas.move(unit[1])
+
+        # update window
+        self.window.update()
+
+        delta2 = time.time() - end
+        print("d2:", delta2)

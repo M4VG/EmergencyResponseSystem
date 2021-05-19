@@ -1,33 +1,72 @@
-import random
+
 from Grid import Grid
 from Agents import *
-from Emergency import Emergency
 from GUI import GUI
+from threading import Thread
+import time
+from tkinter import TclError
 import sys
 
 # main function - create grid and agents, function step to advance time
 
 
-def addAgent(agent):
-    if grid.fullBoard():
-        sys.exit('Board is full')
+def run():
 
-    grid.addDispatcher(agent)
+    step = 0
+    startAgents()
+
+    # logic inside loop: double the number of steps, grid steps only on even steps
+    # so the GUI updates twice as fast as the grid evolves
+    while step < maxSteps:
+        # start timer
+        start = time.time()
+
+        # print("main cycle started")
+
+        # if step % 2 == 0:
+        grid.step()
+            # printGrid()
+
+        # print("grid updated")
+
+        try:
+            guiInstance.updateBoard()
+            pass
+        except TclError:
+            break
+
+        # print("board updated")
+
+        step += 1
+        delta = time.time() - start
+        print(delta)
+        print(step)
+        if delta < 0.50:
+            time.sleep(0.50 - delta)
+
+    stopAgents()
+
+    # close window
+    try:
+        guiInstance.window.destroy()
+    except TclError:
+        pass
+
+    print("Simulation over.")
 
 
-def step():
-    emergencies = 1 if random.random() < 0.3 else 0
-    for _ in range(emergencies):
-        position = grid.getFreePosition()
-        if position is None:
-            continue    # Board is full
-        t = random.randint(1, 3) # only simple ones for now
-        emergency = Emergency(position, fire=(t == 1), medical=(t == 2), police=(t == 3))   # default severity and time limit
-        grid.addEmergency(emergency)
-        print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
-    grid.step()
-    printGrid()
-    
+def startAgents():
+    for thread in agentThreads:
+        thread.start()
+    for agent in agents:
+        agent.startUnits()
+        #pass
+
+
+def stopAgents():
+    for agent in agents:
+        agent.stop()
+
 
 def printGrid():
     print('\n====== GRID STATUS ======\n')
@@ -48,18 +87,28 @@ def printGrid():
 
 # --------------- Main program execution --------------- #
 
-# create grid and agents
+# create grid
 grid = Grid(10, 10)
-addAgent(FireStation((2, 3), 3))
-addAgent(FireStation((7, 8), 5))
-addAgent(Hospital((4, 1), 4))
-addAgent(Hospital((3, 8), 3))
-addAgent(PoliceStation((8, 4), 4))
-addAgent(PoliceStation((1, 6), 4))
+maxSteps = 50
 
-printGrid()
-print('> Press space ingame to step')
+# create agents
+agents = [
+    FireStation((2, 3), 3),
+    FireStation((7, 8), 5),
+    Hospital((4, 1), 4),
+    Hospital((3, 8), 3),
+    PoliceStation((8, 4), 4),
+    PoliceStation((1, 6), 4)
+]
+agentThreads = []
+
+# add agents to grid and create agent threads
+for agent in agents:
+    grid.addDispatcher(agent)
+    agentThreads.append(Thread(target=agent.run))
 
 # create GUI
-guiInstance = GUI(grid, step)
-guiInstance.window.mainloop()
+guiInstance = GUI(grid)
+
+# run simulation
+run()

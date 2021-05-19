@@ -1,5 +1,7 @@
 
 from enum import Enum
+import time
+from threading import Thread, Lock
 
 
 class AgentType(Enum):
@@ -13,14 +15,35 @@ class AgentType(Enum):
 class Agent:
 
     def __init__(self, agentType, position, numberOfUnits):
+
         self.type = agentType
         self.position = position    # position on the grid
-        self.units = [ResponseUnit(agentType, position) for i in range(numberOfUnits)]  # array of units
-        self.assignedEmergencies = []       # new emergencies assigned to agent
-        self.dispatchedEmergencies = []     # emergencies already responded to (sent units)
+
+        self.units = [ResponseUnit(agentType, position) for _ in range(numberOfUnits)]  # array of units
+        self.unitThreads = [Thread(target=unit.run) for unit in self.units]
+
+        self.assignedEmergencies = []           # new emergencies assigned to agent
+        self.dispatchedEmergencies = []         # emergencies already responded to (sent units)
+        self.assignedEmergenciesLock = Lock()   # concurrency lock
+
+        self.halt = False
+
+    def startUnits(self):
+        for thread in self.unitThreads:
+            thread.start()
+
+    def stop(self):
+        self.halt = True
+        for unit in self.units:
+            unit.stop()
 
     def assignEmergency(self, emergency):
-        self.assignedEmergencies.append(emergency)
+        with self.assignedEmergenciesLock:
+            self.assignedEmergencies.append(emergency)
+
+    def removeAssignedEmergency(self, emergency):
+        with self.assignedEmergenciesLock:
+            self.assignedEmergencies.remove(emergency)
 
     def findFreeUnits(self):
         units = []
@@ -39,46 +62,51 @@ class Agent:
 
     def retrieveUnits(self, emergency):
         for unit in self.units:
-            if unit.goalEmergency == emergency:
+            if unit.getGoalEmergency() == emergency:
                 unit.retrieve()
 
     # ------------ Main agent cycle ------------ #
 
-    def step(self):
+    def run(self):
 
-        for emergency in self.assignedEmergencies:
-            # check for expired emergencies
-            if emergency.isExpired():
-                self.dispatchedEmergencies.remove(emergency)
-                self.retrieveUnits(emergency)
+        # print("agent running")
 
-        for emergency in self.dispatchedEmergencies:
-            # check for answered emergencies
-            if emergency.isAnswered():
-                self.dispatchedEmergencies.remove(emergency)
+        while not self.halt:
 
-            # check for expired emergencies
-            if emergency.isExpired():
-                self.dispatchedEmergencies.remove(emergency)
-                self.retrieveUnits(emergency)
+            with self.assignedEmergenciesLock:
+                assignedEmergenciesCopy = self.assignedEmergencies
 
-        # send available units to assigned emergencies
-        numFreeUnits = len(self.findFreeUnits())
-        while numFreeUnits > 0 and len(self.assignedEmergencies) > 0:
-            emergency = self.assignedEmergencies[0]
-            numNeededUnits = emergency.getNeededUnits(self.type)
+            for emergency in assignedEmergenciesCopy:
+                # check for expired emergencies
+                if emergency.isExpired():
+                    self.removeAssignedEmergency(emergency)
+                    self.retrieveUnits(emergency)
 
-            if numFreeUnits < numNeededUnits:
-                self.sendUnits(emergency, numFreeUnits)
-                numFreeUnits = 0
-            else:
-                self.sendUnits(emergency, numNeededUnits)
-                numFreeUnits -= numNeededUnits
-                self.assignedEmergencies.remove(emergency)
-                self.dispatchedEmergencies.append(emergency)
+            for emergency in self.dispatchedEmergencies:
+                # check for answered emergencies
+                if emergency.isAnswered():
+                    self.dispatchedEmergencies.remove(emergency)
 
-        for unit in self.units:
-            unit.step()
+                # check for expired emergencies
+                if emergency.isExpired():
+                    self.dispatchedEmergencies.remove(emergency)
+                    self.retrieveUnits(emergency)
+
+            # send available units to assigned emergencies
+            numFreeUnits = len(self.findFreeUnits())
+            while numFreeUnits > 0 and len(assignedEmergenciesCopy) > 0:
+                emergency = assignedEmergenciesCopy[0]
+                numNeededUnits = emergency.getNeededUnits(self.type)
+
+                if numFreeUnits < numNeededUnits:
+                    self.sendUnits(emergency, numFreeUnits)
+                    numFreeUnits = 0
+                else:
+                    self.sendUnits(emergency, numNeededUnits)
+                    numFreeUnits -= numNeededUnits
+                    with self.assignedEmergenciesLock:
+                        self.assignedEmergencies.remove(emergency)
+                    self.dispatchedEmergencies.append(emergency)
 
 
 # ----------------- Specific agent classes ----------------- #
@@ -110,59 +138,97 @@ class ResponseUnit:
         self.currentPosition = homePosition
         self.homePosition = homePosition
         self.goalEmergency = None
+        self.halt = False
+        self.goalEmergencyLock = Lock()     # concurrency lock
+        self.currentPositionLock = Lock()     # concurrency lock
+
+    def stop(self):
+        self.halt = True
 
     def isActive(self):
         return not self.isFree()
 
     def isFree(self):
-        return self.currentPosition == self.homePosition and self.goalEmergency is None
+        return self.getCurrentPosition() == self.homePosition and self.getGoalEmergency() is None
+
+    def getCurrentPosition(self):
+        with self.currentPositionLock:
+            position = self.currentPosition
+        return position
+
+    def setCurrentPosition(self, newPosition):
+        with self.currentPositionLock:
+            self.currentPosition = newPosition
+
+    def getGoalEmergency(self):
+        with self.goalEmergencyLock:
+            emergency = self.goalEmergency
+        return emergency
 
     def setEmergency(self, emergency):
-        assert self.goalEmergency is None
-        self.goalEmergency = emergency
+        with self.goalEmergencyLock:
+            self.goalEmergency = emergency
 
     def retrieve(self):
-        self.goalEmergency = None
+        self.setEmergency(None)
 
     def reachedEmergency(self):
-        return self.goalEmergency is not None and self.currentPosition == self.goalEmergency.position
+        return self.getGoalEmergency() is not None and self.getCurrentPosition() == self.getGoalEmergency().position
 
     def getGoalPosition(self):
-        if self.goalEmergency is not None:
-            return self.goalEmergency.position
+        if self.getGoalEmergency() is not None:
+            return self.getGoalEmergency().position
         else:
             return self.homePosition
 
     # -------------- Mobility functions -------------- #
 
     def moveRight(self):
-        self.currentPosition = (self.currentPosition[0] + 1, self.currentPosition[1])
+        currentPosition = self.getCurrentPosition()
+        self.setCurrentPosition((currentPosition[0] + 1, currentPosition[1]))
 
     def moveLeft(self):
-        self.currentPosition = (self.currentPosition[0] - 1, self.currentPosition[1])
+        currentPosition = self.getCurrentPosition()
+        self.setCurrentPosition((currentPosition[0] - 1, currentPosition[1]))
 
     def moveUp(self):
-        self.currentPosition = (self.currentPosition[0], self.currentPosition[1] + 1)
+        currentPosition = self.getCurrentPosition()
+        self.setCurrentPosition((currentPosition[0], currentPosition[1] + 1))
         
     def moveDown(self):
-        self.currentPosition = (self.currentPosition[0], self.currentPosition[1] - 1)
+        currentPosition = self.getCurrentPosition()
+        self.setCurrentPosition((currentPosition[0], currentPosition[1] - 1))
 
-    def step(self):
-        if self.isActive():
-            if self.reachedEmergency():
-                self.goalEmergency.answer()
-                self.goalEmergency = None
-            
-            else:
-                goalPosition = self.getGoalPosition()
-                distanceX = goalPosition[0] - self.currentPosition[0]
-                distanceY = goalPosition[1] - self.currentPosition[1]
-                
-                if distanceX > 0:
-                    self.moveRight()
-                elif distanceX < 0:
-                    self.moveLeft()
-                elif distanceY > 0:
-                    self.moveUp()
-                elif distanceY < 0:
-                    self.moveDown()
+    def run(self):
+
+        # print("unit running")
+
+        while not self.halt:
+
+            start = time.time()
+
+            if self.isActive():
+
+                if self.reachedEmergency():
+                    self.getGoalEmergency().answer()
+                    self.setEmergency(None)
+
+                else:
+                    goalPosition = self.getGoalPosition()
+                    currentPosition = self.getCurrentPosition()
+                    distanceX = goalPosition[0] - currentPosition[0]
+                    distanceY = goalPosition[1] - currentPosition[1]
+
+                    if distanceX > 0:
+                        self.moveRight()
+                    elif distanceX < 0:
+                        self.moveLeft()
+                    elif distanceY > 0:
+                        self.moveUp()
+                    elif distanceY < 0:
+                        self.moveDown()
+
+            delta = time.time() - start
+            if delta > 0.50:
+                print("DELTA UNIT TOO LONG")
+            time.sleep(0.50 - delta)

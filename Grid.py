@@ -1,7 +1,7 @@
 
-from Agents import AgentType
-import random
 import math
+import random
+from Emergency import *
 
 
 class Grid:
@@ -54,6 +54,7 @@ class Grid:
 
     def addDispatcher(self, dispatcher):
         self.occupyPosition(dispatcher.position)
+
         if dispatcher.type == AgentType.FIRE:
             self.fireStations.append(dispatcher)
         elif dispatcher.type == AgentType.MEDICAL:
@@ -107,14 +108,30 @@ class Grid:
     def addEmergency(self, emergency):
         self.occupyPosition(emergency.position)
         self.activeEmergencies.append(emergency)
+
+    def generateEmergencies(self):
+        emergencies = 1 if random.random() < 0.3 else 0
+        for _ in range(emergencies):
+            position = self.getFreePosition()
+            if position is None:
+                continue  # Board is full
+            t = random.randint(1, 3)  # only simple ones for now
+            emergency = Emergency(position, fire=(t == 1), medical=(t == 2),
+                                  police=(t == 3))  # default severity and time limit
+            self.addEmergency(emergency)
+            # print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
     
     def step(self):
+
+        self.generateEmergencies()
+
         for emergency in self.activeEmergencies:
             # check for answered emergencies
             if emergency.isAnswered():
                 self.activeEmergencies.remove(emergency)
                 self.answeredEmergencies.append(emergency)
                 self.clearPosition(emergency.position)
+                print(">>> emergency answered")
 
             # check for expired emergencies
             elif emergency.isExpired():
@@ -130,7 +147,3 @@ class Grid:
             # decrement remaining steps for already assigned emergencies
             else:
                 emergency.step()
-
-        # step agents
-        for agent in self.getAllAgents():
-            agent.step()
