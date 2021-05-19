@@ -109,21 +109,29 @@ class Grid:
         self.occupyPosition(emergency.position)
         self.activeEmergencies.append(emergency)
 
-    def generateEmergencies(self):
-        emergencies = 1 if random.random() < 0.3 else 0
+    def spawnEmergencies(self):
+
+        # decide how many emergencies to spawn
+        emergencies = random.choice([0, 1, 2])
+
         for _ in range(emergencies):
+
             position = self.getFreePosition()
             if position is None:
                 continue  # Board is full
-            t = random.randint(1, 3)  # only simple ones for now
-            emergency = Emergency(position, fire=(t == 1), medical=(t == 2),
-                                  police=(t == 3))  # default severity and time limit
+
+            fire = medical = police = False
+            while not (fire or medical or police):
+                fire = random.choice([True, False])
+                medical = random.choice([True, False])
+                police = random.choice([True, False])
+            emergency = Emergency(position, fire, medical, police)  # default severity and time limit
             self.addEmergency(emergency)
-            # print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
+            print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
     
     def step(self):
 
-        self.generateEmergencies()
+        self.spawnEmergencies()
 
         for emergency in self.activeEmergencies:
             # check for answered emergencies

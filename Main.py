@@ -18,6 +18,8 @@ def run():
     # logic inside loop: double the number of steps, grid steps only on even steps
     # so the GUI updates twice as fast as the grid evolves
     while step < maxSteps:
+
+        print("STEP ", step)
         # start timer
         start = time.time()
 
@@ -25,12 +27,12 @@ def run():
 
         # if step % 2 == 0:
         grid.step()
-            # printGrid()
+        printGrid()
 
         # print("grid updated")
 
         try:
-            guiInstance.updateBoard()
+            # guiInstance.updateBoard()
             pass
         except TclError:
             break
@@ -40,15 +42,18 @@ def run():
         step += 1
         delta = time.time() - start
         print(delta)
-        print(step)
-        if delta < 0.50:
-            time.sleep(0.50 - delta)
+        if delta < 1:
+            time.sleep(1 - delta)
+        else:
+            print("-------------------- DELTA TOO LONG ------------------------")
+        print()
 
     stopAgents()
 
     # close window
     try:
-        guiInstance.window.destroy()
+        # guiInstance.window.destroy()
+        pass
     except TclError:
         pass
 
@@ -60,7 +65,6 @@ def startAgents():
         thread.start()
     for agent in agents:
         agent.startUnits()
-        #pass
 
 
 def stopAgents():
@@ -74,14 +78,17 @@ def printGrid():
         for element in row:
             print(int(element), ' ', end='')
         print()
+    print()
+    '''
     for fireStation in grid.fireStations:
-        print('\nFire station at ', fireStation.position)
+        print('Fire station at ', fireStation.position)
     for hospital in grid.hospitals:
         print('Hospital at ', hospital.position)
     for policeStation in grid.policeStations:
         print('Police station at ', policeStation.position)
     for emergency in grid.activeEmergencies:
         print('Emergency at ', emergency.position)
+    '''
     print('\n=========================\n')
 
 
@@ -108,7 +115,10 @@ for agent in agents:
     agentThreads.append(Thread(target=agent.run))
 
 # create GUI
-guiInstance = GUI(grid)
+allUnits = []
+for agent in agents:
+    allUnits += agent.units
+# guiInstance = GUI(grid, allUnits)
 
 # run simulation
 run()

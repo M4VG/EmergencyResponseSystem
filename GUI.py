@@ -20,8 +20,9 @@ class GUI:
     # Initialization Functions:
     # ------------------------------------------------------------------
 
-    def __init__(self, grid: Grid, screenSize=600):
+    def __init__(self, grid: Grid, units: list, screenSize=600):
         self.grid = grid
+        self.units = units
         self.emergencyObjects = []
         self.unitObjects = []
 
@@ -140,8 +141,6 @@ class GUI:
         start = time.time()
 
         # Re-draw emergencies every step
-        active = self.grid.activeEmergencies
-        # emergencies = list(filter(lambda e: e., self.emergencyObjects))
         for emergency in self.emergencyObjects:
             self.canvas.delete(emergency)
         for emergency in self.grid.activeEmergencies:
@@ -151,10 +150,13 @@ class GUI:
         delta1 = end - start
         print("d1:", delta1)
 
-        # move units
-        #for unit in self.unitObjects:
-        #    self.canvas.move(unit[0], )
-        #    self.canvas.move(unit[1])
+        # Re-draw units every step
+        for unit in self.unitObjects:
+            self.canvas.delete(unit[0])
+            self.canvas.delete(unit[1])
+        for unit in self.units:
+            if unit.isActive():
+                self.placeUnit(unit)
 
         # update window
         self.window.update()

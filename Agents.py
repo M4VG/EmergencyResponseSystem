@@ -88,7 +88,7 @@ class Agent:
                     self.dispatchedEmergencies.remove(emergency)
 
                 # check for expired emergencies
-                if emergency.isExpired():
+                elif emergency.isExpired():
                     self.dispatchedEmergencies.remove(emergency)
                     self.retrieveUnits(emergency)
 
@@ -229,6 +229,6 @@ class ResponseUnit:
                         self.moveDown()
 
             delta = time.time() - start
-            if delta > 0.50:
+            if delta > 1:
                 print("DELTA UNIT TOO LONG")
-            time.sleep(0.50 - delta)
+            time.sleep(1 - delta)
