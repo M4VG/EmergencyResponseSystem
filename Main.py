@@ -100,12 +100,12 @@ maxSteps = 50
 
 # create agents
 agents = [
-    FireStation((2, 3), 3),
-    FireStation((7, 8), 5),
-    Hospital((4, 1), 4),
-    Hospital((3, 8), 3),
-    PoliceStation((8, 4), 4),
-    PoliceStation((1, 6), 4)
+    ReactiveFireStation((2, 3), 3),
+    ReactiveFireStation((7, 8), 5),
+    ReactiveHospital((4, 1), 4),
+    ReactiveHospital((3, 8), 3),
+    ReactivePoliceStation((8, 4), 4),
+    ReactivePoliceStation((1, 6), 4)
 ]
 agentThreads = []
 

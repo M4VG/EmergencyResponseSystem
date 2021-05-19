@@ -65,10 +65,15 @@ class Agent:
             if unit.getGoalEmergency() == emergency:
                 unit.retrieve()
 
-    # ------------ Main agent cycle ------------ #
+
+# ------------------ Reactive agent class ------------------ #
+
+class ReactiveAgent(Agent):
+
+    def __init__(self, agentType, position, numberOfUnits):
+        Agent.__init__(self, agentType, position, numberOfUnits)
 
     def run(self):
-
         # print("agent running")
 
         while not self.halt:
@@ -109,24 +114,56 @@ class Agent:
                     self.dispatchedEmergencies.append(emergency)
 
 
-# ----------------- Specific agent classes ----------------- #
+# ---------------- Deliberative agent class ---------------- #
 
-class FireStation(Agent):
+class DeliberativeAgent(Agent):
+
+    def __init__(self, agentType, position, numberOfUnits):
+        Agent.__init__(self, agentType, position, numberOfUnits)
+
+    def run(self):
+        # TODO
+        pass
+
+
+# ------------- Specific reactive agent classes ------------ #
+
+class ReactiveFireStation(ReactiveAgent):
 
     def __init__(self, position, numberOfUnits):
-        Agent.__init__(self, AgentType.FIRE, position, numberOfUnits)
+        ReactiveAgent.__init__(self, AgentType.FIRE, position, numberOfUnits)
 
 
-class Hospital(Agent):
-
-    def __init__(self, position, numberOfUnits):
-        Agent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
-
-
-class PoliceStation(Agent):
+class ReactiveHospital(ReactiveAgent):
 
     def __init__(self, position, numberOfUnits):
-        Agent.__init__(self, AgentType.POLICE, position, numberOfUnits)
+        ReactiveAgent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
+
+
+class ReactivePoliceStation(ReactiveAgent):
+
+    def __init__(self, position, numberOfUnits):
+        ReactiveAgent.__init__(self, AgentType.POLICE, position, numberOfUnits)
+
+
+# ----------- Specific deliberative agent classes ---------- #
+
+class DeliberativeFireStation(DeliberativeAgent):
+
+    def __init__(self, position, numberOfUnits):
+        DeliberativeAgent.__init__(self, AgentType.FIRE, position, numberOfUnits)
+
+
+class DeliberativeHospital(DeliberativeAgent):
+
+    def __init__(self, position, numberOfUnits):
+        DeliberativeAgent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
+
+
+class DeliberativePoliceStation(DeliberativeAgent):
+
+    def __init__(self, position, numberOfUnits):
+        DeliberativeAgent.__init__(self, AgentType.POLICE, position, numberOfUnits)
 
 
 # ------------------ Response unit class ------------------ #
