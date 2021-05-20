@@ -6,10 +6,9 @@ class Emergency:
 
     UNITSPERSEVERITY = 1
 
-    def __init__(self, position, fire=False, medical=False, police=False, severityLevel=1, stepLimit=10):
+    def __init__(self, position, fire=False, medical=False, police=False, severityLevel=1):
         self.position = position
         self.severityLevel = severityLevel
-        self.stepsRemaining = stepLimit
 
         # needed units depends on severity level
         neededUnits = severityLevel * self.UNITSPERSEVERITY
@@ -18,11 +17,10 @@ class Emergency:
         self.police = neededUnits if police else 0
         self.totalRemainingUnits = self.fire + self.medical + self.police   # needed to mark emergency as answered only
                                                                             # when all units arrive
+        # time limit calculated based on emergency characteristics
+        self.stepsRemaining = 12 + ([fire, medical, police].count(True) * 4) - (2 * severityLevel)
 
         self.assigned = False  # if agents already assigned to help
-
-        # IDEA: time limit calculated based on emergency characteristics, eg.:
-        # (num of types * severity lvl * multiplicative factor * random factor)
 
     def getNeededUnits(self, agentType):
         if agentType == AgentType.FIRE:

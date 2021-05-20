@@ -120,12 +120,18 @@ class Grid:
             if position is None:
                 continue  # Board is full
 
+            # define emergency types
             fire = medical = police = False
             while not (fire or medical or police):
                 fire = random.choice([True, False])
                 medical = random.choice([True, False])
                 police = random.choice([True, False])
-            emergency = Emergency(position, fire, medical, police)  # default severity and time limit
+
+            # define emergency severity
+            severity = random.randint(1, 4)
+
+            # create emergency
+            emergency = Emergency(position, fire, medical, police, severity)
             self.addEmergency(emergency)
             print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
     
