@@ -121,9 +121,65 @@ class DeliberativeAgent(Agent):
     def __init__(self, agentType, position, numberOfUnits):
         Agent.__init__(self, agentType, position, numberOfUnits)
 
-    def run(self):
-        # TODO
+        self.desires = []
+        self.intentions = []
+
+    def brf(self):
+        # beliefs revision function
+
+        with self.assignedEmergenciesLock:
+            assignedEmergenciesCopy = self.assignedEmergencies
+
+        for emergency in assignedEmergenciesCopy:
+            # check for expired emergencies
+            if emergency.isExpired():
+                self.removeAssignedEmergency(emergency)
+                self.retrieveUnits(emergency)
+
+        for emergency in self.dispatchedEmergencies:
+            # check for answered emergencies
+            if emergency.isAnswered():
+                self.dispatchedEmergencies.remove(emergency)
+
+            # check for expired emergencies
+            elif emergency.isExpired():
+                self.dispatchedEmergencies.remove(emergency)
+                self.retrieveUnits(emergency)
+
+    def options(self):
+        # choose desires from beliefs and intentions
         pass
+
+    def filter(self):
+        # choose intentions from desires and current intentions
+        pass
+
+    def plan(self):
+        # make a plan to achieve intentions
+        pass
+
+    def run(self):
+
+        # Deliberative loop:
+        #   1. update beliefs
+        #       - what will the beliefs be? just the assigned emergencies?
+        #   2. deliberate to decide intentions:
+        #       - determine available options
+        #       - filter
+        #   3. means-end reasoning: plan
+        #   4. execute plan (give plan to units - maybe included in 3?)
+
+        while not self.halt:
+
+            # 1. update beliefs
+            self.brf()
+
+            # 2. deliberate
+            self.options()
+            self.filter()
+
+            # 3. means-end reasoning
+            self.plan()
 
 
 # ------------- Specific reactive agent classes ------------ #
@@ -177,7 +233,7 @@ class ResponseUnit:
         self.goalEmergency = None
         self.halt = False
         self.goalEmergencyLock = Lock()     # concurrency lock
-        self.currentPositionLock = Lock()     # concurrency lock
+        self.currentPositionLock = Lock()   # concurrency lock
 
     def stop(self):
         self.halt = True
