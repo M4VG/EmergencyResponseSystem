@@ -15,8 +15,6 @@ def run():
     step = 0
     startAgents()
 
-    # logic inside loop: double the number of steps, grid steps only on even steps
-    # so the GUI updates twice as fast as the grid evolves
     while step < maxSteps:
 
         print("STEP ", step)
