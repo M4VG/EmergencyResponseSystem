@@ -8,7 +8,7 @@ class Grid:
 
     def __init__(self, rows, columns):
         # grid 
-        self.grid = [[False for _ in range(columns)] for _ in range(rows)]  # true if occupied, false otherwise
+        self.grid = [['-' for _ in range(columns)] for _ in range(rows)]  # for printing
         self.size = (rows, columns)
 
         # agents
@@ -28,13 +28,16 @@ class Grid:
         return all(i >= 0 for i in position) and all(i < j for i, j in zip(position, self.size))
 
     def positionFree(self, position):
-        return not self.grid[position[0]][position[1]]
+        return self.grid[position[0]][position[1]] == '-'
 
     def getRandomPosition(self):
         return tuple(random.randint(0, i-1) for i in self.size)
 
     def fullBoard(self):
-        return all([all(x) for x in self.grid])
+        for row in self.grid:
+            for element in row:
+                if element == '-'   : return False
+        return True
 
     def getFreePosition(self):
         if self.fullBoard():
@@ -44,16 +47,16 @@ class Grid:
             pos = self.getRandomPosition()
         return pos
 
-    def occupyPosition(self, position):
+    def occupyPosition(self, position, typeStr):
         assert self.positionInBounds(position)
         assert self.positionFree(position)
-        self.grid[position[0]][position[1]] = True
+        self.grid[position[0]][position[1]] = typeStr
 
     def clearPosition(self, position):
-        self.grid[position[0]][position[1]] = False
+        self.grid[position[0]][position[1]] = '-'
 
     def addDispatcher(self, dispatcher):
-        self.occupyPosition(dispatcher.position)
+        self.occupyPosition(dispatcher.position, dispatcher.toString())
 
         if dispatcher.type == AgentType.FIRE:
             self.fireStations.append(dispatcher)
@@ -106,7 +109,7 @@ class Grid:
         emergency.assigned = True
 
     def addEmergency(self, emergency):
-        self.occupyPosition(emergency.position)
+        self.occupyPosition(emergency.position, emergency.toString())
         self.activeEmergencies.append(emergency)
 
     def spawnEmergencies(self):
@@ -161,3 +164,13 @@ class Grid:
             # decrement remaining steps for already assigned emergencies
             else:
                 emergency.step()
+
+    def toString(self):
+        string = '\n====== GRID STATUS ======\n\n'
+        for row in self.grid:
+            for element in row:
+                string += element + '  '
+            string += '\n'
+        string += '\n' 
+        string += '\n=========================\n'
+        return string

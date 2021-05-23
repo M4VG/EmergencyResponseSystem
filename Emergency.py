@@ -1,5 +1,6 @@
 
 from Agents import AgentType
+import time
 
 
 class Emergency:
@@ -21,6 +22,10 @@ class Emergency:
         self.stepsRemaining = 12 + ([fire, medical, police].count(True) * 4) - (2 * severityLevel)
 
         self.assigned = False  # if agents already assigned to help
+
+        # metrics
+        self.spawnTime = time.time()
+        self.responseTime = None
 
     def getNeededUnits(self, agentType):
         if agentType == AgentType.FIRE:
@@ -49,6 +54,11 @@ class Emergency:
 
     def answer(self):
         self.totalRemainingUnits -= 1
+        if (self.isAnswered()):
+            self.responseTime = time.time() - self.spawnTime 
 
     def step(self):
         self.stepsRemaining -= 1
+
+    def toString(self):
+        return 'e'

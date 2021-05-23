@@ -2,6 +2,7 @@
 from Grid import Grid
 from Agents import *
 from GUI import GUI
+from EvaluationMetrics import EvaluationMetrics
 from threading import Thread
 import time
 from tkinter import TclError
@@ -27,7 +28,7 @@ def run():
 
         # if step % 2 == 0:
         grid.step()
-        printGrid()
+        print(grid.toString())
 
         # print("grid updated")
 
@@ -72,26 +73,6 @@ def stopAgents():
         agent.stop()
 
 
-def printGrid():
-    print('\n====== GRID STATUS ======\n')
-    for row in grid.grid:
-        for element in row:
-            print(int(element), ' ', end='')
-        print()
-    print()
-    '''
-    for fireStation in grid.fireStations:
-        print('Fire station at ', fireStation.position)
-    for hospital in grid.hospitals:
-        print('Hospital at ', hospital.position)
-    for policeStation in grid.policeStations:
-        print('Police station at ', policeStation.position)
-    for emergency in grid.activeEmergencies:
-        print('Emergency at ', emergency.position)
-    '''
-    print('\n=========================\n')
-
-
 # --------------- Main program execution --------------- #
 
 # create grid
@@ -122,3 +103,8 @@ for agent in agents:
 
 # run simulation
 run()
+
+print()
+evaluationSystem = EvaluationMetrics(grid)
+evaluationSystem.evaluateGrid(grid)
+print()

@@ -28,6 +28,8 @@ class Agent:
 
         self.halt = False
 
+        self.answeredEmergencies = 0
+
     def startUnits(self):
         for thread in self.unitThreads:
             thread.start()
@@ -91,6 +93,7 @@ class ReactiveAgent(Agent):
                 # check for answered emergencies
                 if emergency.isAnswered():
                     self.dispatchedEmergencies.remove(emergency)
+                    self.answeredEmergencies += 1
 
                 # check for expired emergencies
                 elif emergency.isExpired():
@@ -188,6 +191,9 @@ class ReactiveFireStation(ReactiveAgent):
 
     def __init__(self, position, numberOfUnits):
         ReactiveAgent.__init__(self, AgentType.FIRE, position, numberOfUnits)
+    
+    def toString(self):
+        return 'F'
 
 
 class ReactiveHospital(ReactiveAgent):
@@ -195,12 +201,16 @@ class ReactiveHospital(ReactiveAgent):
     def __init__(self, position, numberOfUnits):
         ReactiveAgent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
 
+    def toString(self):
+        return 'H'
 
 class ReactivePoliceStation(ReactiveAgent):
 
     def __init__(self, position, numberOfUnits):
         ReactiveAgent.__init__(self, AgentType.POLICE, position, numberOfUnits)
 
+    def toString(self):
+        return 'P'
 
 # ----------- Specific deliberative agent classes ---------- #
 
