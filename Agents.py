@@ -10,6 +10,12 @@ class AgentType(Enum):
     POLICE = 3
 
 
+class AgentActions(Enum):
+    DISPATCH = 1
+    RETRIEVE = 2
+    ASK_HELP = 3
+
+
 # ------------------ General agent class ------------------ #
 
 class Agent:
@@ -23,6 +29,7 @@ class Agent:
         self.unitThreads = [Thread(target=unit.run) for unit in self.units]
 
         self.assignedEmergencies = []           # new emergencies assigned to agent
+        self.assignedEmergenciesCopy = []
         self.dispatchedEmergencies = []         # emergencies already responded to (sent units)
         self.assignedEmergenciesLock = Lock()   # concurrency lock
 
@@ -81,12 +88,13 @@ class ReactiveAgent(Agent):
         while not self.halt:
 
             with self.assignedEmergenciesLock:
-                assignedEmergenciesCopy = self.assignedEmergencies
+                self.assignedEmergenciesCopy = self.assignedEmergencies.copy()
 
-            for emergency in assignedEmergenciesCopy:
+            for emergency in self.assignedEmergenciesCopy:
                 # check for expired emergencies
                 if emergency.isExpired():
                     self.removeAssignedEmergency(emergency)
+                    self.assignedEmergenciesCopy.remove(emergency)
                     self.retrieveUnits(emergency)
 
             for emergency in self.dispatchedEmergencies:
@@ -102,8 +110,11 @@ class ReactiveAgent(Agent):
 
             # send available units to assigned emergencies
             numFreeUnits = len(self.findFreeUnits())
-            while numFreeUnits > 0 and len(assignedEmergenciesCopy) > 0:
-                emergency = assignedEmergenciesCopy[0]
+            numEmergencies = len(self.assignedEmergenciesCopy)
+            i = 0
+
+            while numFreeUnits > 0 and i < numEmergencies:
+                emergency = self.assignedEmergenciesCopy[i]
                 numNeededUnits = emergency.getNeededUnits(self.type)
 
                 if numFreeUnits < numNeededUnits:
@@ -116,6 +127,8 @@ class ReactiveAgent(Agent):
                         self.assignedEmergencies.remove(emergency)
                     self.dispatchedEmergencies.append(emergency)
 
+                i += 1
+
 
 # ---------------- Deliberative agent class ---------------- #
 
@@ -124,20 +137,42 @@ class DeliberativeAgent(Agent):
     def __init__(self, agentType, position, numberOfUnits):
         Agent.__init__(self, agentType, position, numberOfUnits)
 
-        self.desires = []
-        self.intentions = []
+        self.desires = []       # list of (action, emergency, [numUnits]) tuples
+        self.intentions = []    # list of (action, emergency, [numUnits]) tuples
+        self.plan = []          # list of (action, emergency, [numUnits]) tuples
+
+        self.reconsiderFlag = False
+
+        self.expiredEmergencies = []
+
+    def reconsider(self):
+        # determines if the agent should reconsider its intentions
+
+        # if there are new expired emergencies (identified in brf)
+        if self.reconsiderFlag is True:
+            return
+
+        # if there are available units and new assigned emergencies
+        if len(self.findFreeUnits()) > 0 and len(self.assignedEmergenciesCopy) > 0:
+            self.reconsiderFlag = True
+
+        # if the current plan is empty
+        if len(self.plan) == 0:
+            self.reconsiderFlag = True
 
     def brf(self):
         # beliefs revision function
 
         with self.assignedEmergenciesLock:
-            assignedEmergenciesCopy = self.assignedEmergencies
+            self.assignedEmergenciesCopy = self.assignedEmergencies.copy()
 
-        for emergency in assignedEmergenciesCopy:
+        for emergency in self.assignedEmergenciesCopy:
             # check for expired emergencies
             if emergency.isExpired():
+                self.expiredEmergencies.append(emergency)
+                self.assignedEmergenciesCopy.remove(emergency)
                 self.removeAssignedEmergency(emergency)
-                self.retrieveUnits(emergency)
+                # TODO reconsider when an assigned emergency which we have already sent units expires
 
         for emergency in self.dispatchedEmergencies:
             # check for answered emergencies
@@ -146,43 +181,88 @@ class DeliberativeAgent(Agent):
 
             # check for expired emergencies
             elif emergency.isExpired():
+                self.expiredEmergencies.append(emergency)
                 self.dispatchedEmergencies.remove(emergency)
-                self.retrieveUnits(emergency)
+                self.reconsiderFlag = True      # reconsider
 
     def options(self):
         # choose desires from beliefs and intentions
-        pass
+
+        # retrieve units
+        for emergency in self.expiredEmergencies:
+            self.desires.append((AgentActions.RETRIEVE, emergency))
+            # TODO find num of units that will be retrieved
+
+        # send units
+        for emergency in self.assignedEmergenciesCopy:
+            self.desires.append((AgentActions.DISPATCH, emergency, emergency.getNeededUnits(self.type)))
 
     def filter(self):
         # choose intentions from desires and current intentions
         pass
 
-    def plan(self):
-        # make a plan to achieve intentions
+        '''
+        # TODO prioritize
+        numFreeUnits = len(self.findFreeUnits())    # TODO add num of units that will be free
+        numEmergencies = len(self.assignedEmergenciesCopy)
+        i = 0
+
+        while numFreeUnits > 0 and i < numEmergencies:
+            emergency = self.assignedEmergenciesCopy[i]
+            numNeededUnits = emergency.getNeededUnits(self.type)
+
+            if numFreeUnits < numNeededUnits:
+                self.desires.append((AgentActions.DISPATCH, emergency, numFreeUnits))
+                numFreeUnits = 0
+            else:
+                self.desires.append((AgentActions.DISPATCH, emergency, numNeededUnits))
+                numFreeUnits -= numNeededUnits
+                with self.assignedEmergenciesLock:
+                    self.assignedEmergencies.remove(emergency)
+                self.dispatchedEmergencies.append(emergency)
+
+            i += 1
+        '''
+
+    def makePlan(self):
+        # make a plan or adapt current plan to achieve intentions
         pass
 
-    def run(self):
+    def executeNextAction(self):
+        # execute the next action on the plan
 
-        # Deliberative loop:
-        #   1. update beliefs
-        #       - what will the beliefs be? just the assigned emergencies?
-        #   2. deliberate to decide intentions:
-        #       - determine available options
-        #       - filter
-        #   3. means-end reasoning: plan
-        #   4. execute plan (give plan to units - maybe included in 3?)
+        if len(self.plan) > 0:
+
+            action = self.plan[0][0]
+            emergency = self.plan[0][1]
+
+            if action == AgentActions.DISPATCH:
+                numUnits = self.plan[0][2]
+                self.sendUnits(emergency, numUnits)
+
+            elif action == AgentActions.RETRIEVE:
+                self.retrieveUnits(emergency)
+                self.expiredEmergencies.remove(emergency)
+
+    def run(self):
 
         while not self.halt:
 
             # 1. update beliefs
             self.brf()
 
-            # 2. deliberate
-            self.options()
-            self.filter()
+            if self.reconsider():
+                self.reconsiderFlag = False
 
-            # 3. means-end reasoning
-            self.plan()
+                # 2. deliberate
+                self.options()
+                self.filter()
+
+                # 3. means-end reasoning
+                self.makePlan()
+
+            # 4. execute plan
+            self.executeNextAction()
 
 
 # ------------- Specific reactive agent classes ------------ #
