@@ -99,7 +99,7 @@ class EvaluationMetrics:
         print("  - MRT Severity lvl.4 ................... ", self.MRTperSeverity[3], "s")
 
         # Distribution of effort
-        print(" Distribution of Effort")
+        print(" Distribution of Effort:")
         print("  - Fire stations ....................... ", self.fireEffort, "%")
         print("  - Hospitals ........................... ", self.hospitalsEffort, "%")
         print("  - Police stations ..................... ", self.policeEffort, "%")

@@ -299,18 +299,24 @@ class DeliberativeFireStation(DeliberativeAgent):
     def __init__(self, position, numberOfUnits):
         DeliberativeAgent.__init__(self, AgentType.FIRE, position, numberOfUnits)
 
+    def toString(self):
+        return 'F'
 
 class DeliberativeHospital(DeliberativeAgent):
 
     def __init__(self, position, numberOfUnits):
         DeliberativeAgent.__init__(self, AgentType.MEDICAL, position, numberOfUnits)
 
+    def toString(self):
+        return 'H'
 
 class DeliberativePoliceStation(DeliberativeAgent):
 
     def __init__(self, position, numberOfUnits):
         DeliberativeAgent.__init__(self, AgentType.POLICE, position, numberOfUnits)
 
+    def toString(self):
+        return 'P'
 
 # ------------------ Response unit class ------------------ #
 
