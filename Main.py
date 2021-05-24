@@ -94,6 +94,17 @@ deliberativeAgents = [
     DeliberativePoliceStation((8, 4), 6),
     DeliberativePoliceStation((1, 6), 6)
 ]
+
+social = True
+if social:
+    # add references to each others
+    agentCount = len(deliberativeAgents)
+    for iCurrent in range(agentCount):
+        for iAppend in range(agentCount):
+            if iCurrent == iAppend: # skip itself
+                continue
+            deliberativeAgents[iCurrent].addAgent(deliberativeAgents[iAppend])
+
 # agents = reactiveAgents
 agents = deliberativeAgents
 agentThreads = []

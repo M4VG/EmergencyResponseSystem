@@ -1,6 +1,7 @@
 
 from enum import Enum
 import time
+import math
 from threading import Thread, Lock
 
 
@@ -144,6 +145,14 @@ class DeliberativeAgent(Agent):
 
         self.expiredEmergencies = []
 
+        self.otherAgents = [] # ability to communicate
+
+    def isSocial(self):
+        return len(self.otherAgents) != 0
+
+    def addAgent(self, agent):
+        self.otherAgents.append(agent)
+
     def reconsider(self):
         # determines if the agent should reconsider its intentions
 
@@ -203,6 +212,7 @@ class DeliberativeAgent(Agent):
         # send units
         for emergency in self.assignedEmergenciesCopy:
             self.desires.append((AgentActions.DISPATCH, emergency, emergency.getNeededUnits(self.type)))
+            # NOTE : appending ASK_HELP is overkill, it just adds unnecessary overhead
 
     def filter(self):
         # choose intentions from desires and current intentions
@@ -232,6 +242,7 @@ class DeliberativeAgent(Agent):
             elif action == AgentActions.DISPATCH:
 
                 # exclude emergencies which probably cant be answered on time - calculate distance or simply use heuristic?
+                # FIXME : change to a more accurate heuristic ?
                 if emergency.stepsRemaining <= 5:
                     continue
 
@@ -250,11 +261,42 @@ class DeliberativeAgent(Agent):
             if numFreeUnits == 0:
                 break
 
+            neededUnits = desire[2]
+
             # if enough units available, help next emergency with biggest priority
-            if numFreeUnits >= desire[2]:
+            if numFreeUnits >= neededUnits:
 
                 self.intentions.append(desire)
-                numFreeUnits -= desire[2]
+                numFreeUnits -= neededUnits
+
+            # if not enough units but able to communicate, ask for help
+            elif self.isSocial():
+
+                remainingUnits = neededUnits - numFreeUnits
+                agent = self.findClosestAgent(desire[1], remainingUnits)
+
+                if agent != None:
+
+                    # FIXME : split unit usage according to relative percentage of the total units ?
+                    #       : EX. need 3 | 2 free and 4 remain | send 1 and ask for 2, dont send 2 and ask for 1
+
+                    askForHelp = (AgentActions.ASK_HELP, emergency, numFreeUnits, agent)
+                    self.intentions.append(askForHelp)
+                    numFreeUnits -= numFreeUnits
+
+    def findClosestAgent(self, emergency, neededUnits):
+        # find (same type) agent closest to the emergency with the necessary units
+        minDistance = math.inf
+        closestAgent = None
+        for agent in self.otherAgents:
+            if agent.type != self.type:
+                continue
+            distance = math.sqrt((agent.position[0] - emergency.position[0]) ** 2 + (agent.position[1] - emergency.position[1]) ** 2)
+            # FIXME : mutex units ?
+            if distance < minDistance and len(agent.findFreeUnits()) >= neededUnits:
+                minDistance = distance
+                closestAgent = agent
+        return closestAgent
 
     def makePlan(self):
         # make a plan to achieve intentions
@@ -282,13 +324,22 @@ class DeliberativeAgent(Agent):
             if action == AgentActions.DISPATCH:
                 numUnits = intention[2]
                 self.sendUnits(emergency, numUnits)
-                print("dispatched ", numUnits, " units to emergency at ", emergency.position)
+                print(f'[DISPATCH] Sent {numUnits} units to emergency at {emergency.position}.')
                 self.removeAssignedEmergency(emergency)
                 self.dispatchedEmergencies.append(emergency)
 
             elif action == AgentActions.RETRIEVE:
                 self.retrieveUnits(emergency)
+                print(f'[RETRIEVE] Called back units from the emergency at {emergency.position}.')
                 self.expiredEmergencies.remove(emergency)
+
+            elif action == AgentActions.ASK_HELP:
+                numUnits = intention[2]
+                agent = intention[3]
+                agent.assignEmergency(emergency) # help request
+                self.sendUnits(emergency, numUnits)
+                print(f'[ASK_HELP] Sent {numUnits} units to emergency at {emergency.position}.')
+                self.dispatchedEmergencies.append(emergency)
 
     def run(self):
 
