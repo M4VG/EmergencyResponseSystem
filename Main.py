@@ -78,14 +78,24 @@ grid = Grid(10, 10)
 maxSteps = 50
 
 # create agents
-agents = [
-    ReactiveFireStation((2, 3), 3),
-    ReactiveFireStation((7, 8), 5),
-    ReactiveHospital((4, 1), 4),
-    ReactiveHospital((3, 8), 3),
-    ReactivePoliceStation((8, 4), 4),
-    ReactivePoliceStation((1, 6), 4)
+reactiveAgents = [
+    ReactiveFireStation((2, 3), 6),
+    ReactiveFireStation((7, 8), 6),
+    ReactiveHospital((4, 1), 6),
+    ReactiveHospital((3, 8), 6),
+    ReactivePoliceStation((8, 4), 6),
+    ReactivePoliceStation((1, 6), 6)
 ]
+deliberativeAgents = [
+    DeliberativeFireStation((2, 3), 6),
+    DeliberativeFireStation((7, 8), 6),
+    DeliberativeHospital((4, 1), 6),
+    DeliberativeHospital((3, 8), 6),
+    DeliberativePoliceStation((8, 4), 6),
+    DeliberativePoliceStation((1, 6), 6)
+]
+# agents = reactiveAgents
+agents = deliberativeAgents
 agentThreads = []
 
 # add agents to grid and create agent threads

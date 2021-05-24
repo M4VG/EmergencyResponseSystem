@@ -123,8 +123,7 @@ class ReactiveAgent(Agent):
                 else:
                     self.sendUnits(emergency, numNeededUnits)
                     numFreeUnits -= numNeededUnits
-                    with self.assignedEmergenciesLock:
-                        self.assignedEmergencies.remove(emergency)
+                    self.removeAssignedEmergency(emergency)
                     self.dispatchedEmergencies.append(emergency)
 
                 i += 1
@@ -150,15 +149,18 @@ class DeliberativeAgent(Agent):
 
         # if there are new expired emergencies (identified in brf)
         if self.reconsiderFlag is True:
-            return
+            self.reconsiderFlag = False
+            return True
 
         # if there are available units and new assigned emergencies
         if len(self.findFreeUnits()) > 0 and len(self.assignedEmergenciesCopy) > 0:
-            self.reconsiderFlag = True
+            return True
 
         # if the current plan is empty
         if len(self.plan) == 0:
-            self.reconsiderFlag = True
+            return True
+
+        return False
 
     def brf(self):
         # beliefs revision function
@@ -172,12 +174,14 @@ class DeliberativeAgent(Agent):
                 self.expiredEmergencies.append(emergency)
                 self.assignedEmergenciesCopy.remove(emergency)
                 self.removeAssignedEmergency(emergency)
-                # TODO reconsider when an assigned emergency which we have already sent units expires
+                self.reconsiderFlag = True      # reconsider
+                # NOT_TODO reconsider when an assigned emergency which we have already sent units expires
 
         for emergency in self.dispatchedEmergencies:
             # check for answered emergencies
             if emergency.isAnswered():
                 self.dispatchedEmergencies.remove(emergency)
+                self.answeredEmergencies += 1
 
             # check for expired emergencies
             elif emergency.isExpired():
@@ -188,10 +192,13 @@ class DeliberativeAgent(Agent):
     def options(self):
         # choose desires from beliefs and intentions
 
+        # clear desires
+        self.desires.clear()
+
         # retrieve units
         for emergency in self.expiredEmergencies:
             self.desires.append((AgentActions.RETRIEVE, emergency))
-            # TODO find num of units that will be retrieved
+            # NOT_TODO find num of units that will be retrieved
 
         # send units
         for emergency in self.assignedEmergenciesCopy:
@@ -199,46 +206,85 @@ class DeliberativeAgent(Agent):
 
     def filter(self):
         # choose intentions from desires and current intentions
-        pass
 
-        '''
-        # TODO prioritize
-        numFreeUnits = len(self.findFreeUnits())    # TODO add num of units that will be free
-        numEmergencies = len(self.assignedEmergenciesCopy)
-        i = 0
+        # clear intentions
+        self.intentions.clear()
 
-        while numFreeUnits > 0 and i < numEmergencies:
-            emergency = self.assignedEmergenciesCopy[i]
-            numNeededUnits = emergency.getNeededUnits(self.type)
+        # priority lists
+        severityLevel = {
+            1: [],
+            2: [],
+            3: [],
+            4: []
+        }
 
-            if numFreeUnits < numNeededUnits:
-                self.desires.append((AgentActions.DISPATCH, emergency, numFreeUnits))
-                numFreeUnits = 0
-            else:
-                self.desires.append((AgentActions.DISPATCH, emergency, numNeededUnits))
-                numFreeUnits -= numNeededUnits
-                with self.assignedEmergenciesLock:
-                    self.assignedEmergencies.remove(emergency)
-                self.dispatchedEmergencies.append(emergency)
+        # sort desires
+        for desire in self.desires:
 
-            i += 1
-        '''
+            action = desire[0]
+            emergency = desire[1]
+
+            # include all retrieve desires
+            if action == AgentActions.RETRIEVE:
+                self.intentions.append(desire)
+
+            # separate dispatch desires by severity level
+            elif action == AgentActions.DISPATCH:
+
+                # exclude emergencies which probably cant be answered on time - calculate distance or simply use heuristic?
+                if emergency.stepsRemaining <= 5:
+                    continue
+
+                # keep priority lists ordered by time remaining
+                i = 0
+                for i in range(len(severityLevel[emergency.severityLevel])-1, -1, -1):
+                    if emergency.stepsRemaining >= severityLevel[emergency.severityLevel][i][1].stepsRemaining:
+                        break
+                severityLevel[emergency.severityLevel].insert(i, desire)
+
+        numFreeUnits = len(self.findFreeUnits())  # NOT_TODO add num of units that will be free
+
+        # select intentions
+        for desire in severityLevel[4] + severityLevel[3] + severityLevel[2] + severityLevel[1]:
+
+            if numFreeUnits == 0:
+                break
+
+            # if enough units available, help next emergency with biggest priority
+            if numFreeUnits >= desire[2]:
+
+                self.intentions.append(desire)
+                numFreeUnits -= desire[2]
 
     def makePlan(self):
-        # make a plan or adapt current plan to achieve intentions
-        pass
+        # make a plan to achieve intentions
+
+        # clear current plan
+        self.plan.clear()
+
+        # order by type (dispatch > retrieve) and time left
+        for intention in self.intentions:
+            i = 0
+            for i in range(len(self.plan)):
+                if intention[1].stepsRemaining < self.plan[i][1].stepsRemaining:
+                    break
+            self.plan.insert(i, intention)
 
     def executeNextAction(self):
         # execute the next action on the plan
 
         if len(self.plan) > 0:
 
-            action = self.plan[0][0]
-            emergency = self.plan[0][1]
+            intention = self.plan.pop(0)
+            action = intention[0]
+            emergency = intention[1]
 
             if action == AgentActions.DISPATCH:
-                numUnits = self.plan[0][2]
+                numUnits = intention[2]
                 self.sendUnits(emergency, numUnits)
+                print("dispatched ", numUnits, " units to emergency at ", emergency.position)
+                self.removeAssignedEmergency(emergency)
+                self.dispatchedEmergencies.append(emergency)
 
             elif action == AgentActions.RETRIEVE:
                 self.retrieveUnits(emergency)
@@ -252,7 +298,6 @@ class DeliberativeAgent(Agent):
             self.brf()
 
             if self.reconsider():
-                self.reconsiderFlag = False
 
                 # 2. deliberate
                 self.options()
@@ -284,6 +329,7 @@ class ReactiveHospital(ReactiveAgent):
     def toString(self):
         return 'H'
 
+
 class ReactivePoliceStation(ReactiveAgent):
 
     def __init__(self, position, numberOfUnits):
@@ -291,6 +337,7 @@ class ReactivePoliceStation(ReactiveAgent):
 
     def toString(self):
         return 'P'
+
 
 # ----------- Specific deliberative agent classes ---------- #
 
@@ -302,6 +349,7 @@ class DeliberativeFireStation(DeliberativeAgent):
     def toString(self):
         return 'F'
 
+
 class DeliberativeHospital(DeliberativeAgent):
 
     def __init__(self, position, numberOfUnits):
@@ -310,6 +358,7 @@ class DeliberativeHospital(DeliberativeAgent):
     def toString(self):
         return 'H'
 
+
 class DeliberativePoliceStation(DeliberativeAgent):
 
     def __init__(self, position, numberOfUnits):
@@ -317,6 +366,7 @@ class DeliberativePoliceStation(DeliberativeAgent):
 
     def toString(self):
         return 'P'
+
 
 # ------------------ Response unit class ------------------ #
 
