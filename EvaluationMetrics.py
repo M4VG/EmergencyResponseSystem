@@ -1,5 +1,10 @@
 
+import os
+import csv
+
 class EvaluationMetrics:
+
+    STATS_FILE = 'statistics.csv'
 
     def __init__(self, grid):
         self.totalEmergencies = len(grid.answeredEmergencies) + len(grid.expiredEmergencies)
@@ -104,3 +109,31 @@ class EvaluationMetrics:
         print("  - Hospitals .......................... ", self.hospitalsEffort, "%")
         print("  - Police stations .................... ", self.policeEffort, "%")
                
+
+    def saveStatistics(self, nruns):
+
+        # if the statistics file doesnt exits
+        if not os.path.exists(self.STATS_FILE) or os.stat(self.STATS_FILE).st_size == 0:
+
+            # open the file in the write mode
+            with open(self.STATS_FILE, 'w', newline='') as f:
+                # create the csv writer
+                writer = csv.writer(f)
+
+                header = ['Total', 'Answered', 'Expired', '%ExpiredPercentage', 'MRT', 'MRT1', 'MRT2', 'MRT3', 'MRT4', '#Runs']
+
+                # write the header to the csv file
+                writer.writerow(header)
+            
+            # change access permissions
+            os.chmod(self.STATS_FILE, 0o777)
+
+        # open the file in the append mode
+        with open(self.STATS_FILE, 'a', newline='') as f:
+            # create the csv writer
+            writer = csv.writer(f)
+
+            row = [self.totalEmergencies, self.answeredEmergencies, self.expiredEmergencies, self.percentageExpiredEmergencies, self.MRT, self.MRTperSeverity[0], self.MRTperSeverity[1], self.MRTperSeverity[2], self.MRTperSeverity[3], nruns]
+
+            # write a row to the csv file
+            writer.writerow(row)
