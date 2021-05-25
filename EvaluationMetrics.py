@@ -120,7 +120,7 @@ class EvaluationMetrics:
                 # create the csv writer
                 writer = csv.writer(f)
 
-                header = ['Total', 'Answered', 'Expired', '%ExpiredPercentage', 'MRT', 'MRT1', 'MRT2', 'MRT3', 'MRT4', '#Runs']
+                header = ['Total', 'Answered', 'Expired', '%Expired', 'MRT', 'MRT1', 'MRT2', 'MRT3', 'MRT4', '#Runs']
 
                 # write the header to the csv file
                 writer.writerow(header)
