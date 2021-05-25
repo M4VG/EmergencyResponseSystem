@@ -95,13 +95,14 @@ deliberativeAgents = [
     DeliberativePoliceStation((1, 6), 6)
 ]
 
+# social = False
 social = True
 if social:
     # add references to each others
     agentCount = len(deliberativeAgents)
     for iCurrent in range(agentCount):
         for iAppend in range(agentCount):
-            if iCurrent == iAppend: # skip itself
+            if iCurrent == iAppend:     # skip itself
                 continue
             deliberativeAgents[iCurrent].addAgent(deliberativeAgents[iAppend])
 

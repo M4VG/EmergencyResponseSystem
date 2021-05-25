@@ -93,14 +93,14 @@ class EvaluationMetrics:
         print(" Mean Response Time .................... ", self.MRT, "s")
 
         # MRT per severity
-        print("  - MRT Severity lvl.1 ................... ", self.MRTperSeverity[0], "s")
-        print("  - MRT Severity lvl.2 ................... ", self.MRTperSeverity[1], "s")
-        print("  - MRT Severity lvl.3 ................... ", self.MRTperSeverity[2], "s")
-        print("  - MRT Severity lvl.4 ................... ", self.MRTperSeverity[3], "s")
+        print("  - MRT Severity lvl.1 ................. ", self.MRTperSeverity[0], "s")
+        print("  - MRT Severity lvl.2 ................. ", self.MRTperSeverity[1], "s")
+        print("  - MRT Severity lvl.3 ................. ", self.MRTperSeverity[2], "s")
+        print("  - MRT Severity lvl.4 ................. ", self.MRTperSeverity[3], "s")
 
         # Distribution of effort
         print(" Distribution of Effort:")
-        print("  - Fire stations ....................... ", self.fireEffort, "%")
-        print("  - Hospitals ........................... ", self.hospitalsEffort, "%")
-        print("  - Police stations ..................... ", self.policeEffort, "%")
+        print("  - Fire stations ...................... ", self.fireEffort, "%")
+        print("  - Hospitals .......................... ", self.hospitalsEffort, "%")
+        print("  - Police stations .................... ", self.policeEffort, "%")
                

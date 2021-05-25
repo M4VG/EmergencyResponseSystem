@@ -32,6 +32,7 @@ class Agent:
         self.assignedEmergencies = []           # new emergencies assigned to agent
         self.assignedEmergenciesCopy = []
         self.dispatchedEmergencies = []         # emergencies already responded to (sent units)
+        self.expiredEmergencies = []
         self.assignedEmergenciesLock = Lock()   # concurrency lock
 
         self.halt = False
@@ -96,7 +97,7 @@ class ReactiveAgent(Agent):
                 if emergency.isExpired():
                     self.removeAssignedEmergency(emergency)
                     self.assignedEmergenciesCopy.remove(emergency)
-                    self.retrieveUnits(emergency)
+                    self.expiredEmergencies.append(emergency)
 
             for emergency in self.dispatchedEmergencies:
                 # check for answered emergencies
@@ -107,8 +108,27 @@ class ReactiveAgent(Agent):
                 # check for expired emergencies
                 elif emergency.isExpired():
                     self.dispatchedEmergencies.remove(emergency)
-                    self.retrieveUnits(emergency)
+                    self.expiredEmergencies.append(emergency)
 
+            # main action decision
+            if len(self.expiredEmergencies) > 0:    # retrieve
+                emergency = self.expiredEmergencies.pop(0)
+                self.retrieveUnits(emergency)
+
+            elif len(self.findFreeUnits()) > 0 and len(self.assignedEmergenciesCopy) > 0:
+                emergency = self.assignedEmergenciesCopy[0]
+                numNeededUnits = emergency.getNeededUnits(self.type)
+                numFreeUnits = len(self.findFreeUnits())
+
+                if numFreeUnits < numNeededUnits:
+                    self.sendUnits(emergency, numFreeUnits)
+                else:
+                    self.sendUnits(emergency, numNeededUnits)
+                    self.removeAssignedEmergency(emergency)
+                    self.dispatchedEmergencies.append(emergency)
+
+
+            '''
             # send available units to assigned emergencies
             numFreeUnits = len(self.findFreeUnits())
             numEmergencies = len(self.assignedEmergenciesCopy)
@@ -128,6 +148,7 @@ class ReactiveAgent(Agent):
                     self.dispatchedEmergencies.append(emergency)
 
                 i += 1
+            '''
 
 
 # ---------------- Deliberative agent class ---------------- #
@@ -142,8 +163,6 @@ class DeliberativeAgent(Agent):
         self.plan = []          # list of (action, emergency, [numUnits]) tuples
 
         self.reconsiderFlag = False
-
-        self.expiredEmergencies = []
 
         self.otherAgents = [] # ability to communicate
 
@@ -184,7 +203,6 @@ class DeliberativeAgent(Agent):
                 self.assignedEmergenciesCopy.remove(emergency)
                 self.removeAssignedEmergency(emergency)
                 self.reconsiderFlag = True      # reconsider
-                # NOT_TODO reconsider when an assigned emergency which we have already sent units expires
 
         for emergency in self.dispatchedEmergencies:
             # check for answered emergencies
@@ -207,7 +225,6 @@ class DeliberativeAgent(Agent):
         # retrieve units
         for emergency in self.expiredEmergencies:
             self.desires.append((AgentActions.RETRIEVE, emergency))
-            # NOT_TODO find num of units that will be retrieved
 
         # send units
         for emergency in self.assignedEmergenciesCopy:
@@ -253,7 +270,7 @@ class DeliberativeAgent(Agent):
                         break
                 severityLevel[emergency.severityLevel].insert(i, desire)
 
-        numFreeUnits = len(self.findFreeUnits())  # NOT_TODO add num of units that will be free
+        numFreeUnits = len(self.findFreeUnits())
 
         # select intentions
         for desire in severityLevel[4] + severityLevel[3] + severityLevel[2] + severityLevel[1]:
@@ -304,7 +321,7 @@ class DeliberativeAgent(Agent):
         # clear current plan
         self.plan.clear()
 
-        # order by type (dispatch > retrieve) and time left
+        # order by time left
         for intention in self.intentions:
             i = 0
             for i in range(len(self.plan)):
@@ -519,6 +536,7 @@ class ResponseUnit:
                         self.moveDown()
 
             delta = time.time() - start
-            if delta > 1:
-                print("DELTA UNIT TOO LONG")
-            time.sleep(1 - delta)
+            if delta < 1:
+                time.sleep(1 - delta)
+            else:
+                print("UNIT DELTA TOO LONG")
