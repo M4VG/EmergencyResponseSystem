@@ -1,7 +1,10 @@
 
 import csv
+import numpy as np
 from pprint import pprint
 import matplotlib.pyplot as plt
+from scipy.interpolate import make_interp_spline, BSpline
+import scipy.optimize as opt;
 
 STATS_FILE = 'statistics.csv'
 
@@ -48,8 +51,8 @@ with open(STATS_FILE, newline='') as f:
 
 ### 2. Average the samples for each Total, for each Run
 
-entry = { key: 0 for key in ['Answered', 'Expired', '%Expired', 'MRT', 'MRT1', 'MRT2', 'MRT3', 'MRT4'] }
-averageData = { runKey: { totalKey : entry.copy() for totalKey in data[runKey]} for runKey in data }
+entry = { key : 0 for key in ['Answered', 'Expired', '%Expired', 'MRT', 'MRT1', 'MRT2', 'MRT3', 'MRT4'] }
+averageData = { runKey : { totalKey : entry.copy() for totalKey in data[runKey]} for runKey in data }
 # pprint(averageData)
 
 for run in data:
@@ -73,3 +76,45 @@ pprint(averageData)
 
 ### 3. Plot the data
 
+def getPoints(data, run, key):
+    def sort(x, y):
+        return zip(*sorted(zip(x,y)))
+    run = str(run)
+    x, y = [], []
+    for total in data[run]:
+        x.append(int(total))
+        y.append(float(data[run][total][key]))
+    return sort(x, y)
+
+
+def smoothPlot(x, y, num=200, k=3):
+    # create data
+    x = np.array(x)
+    y = np.array(y)
+
+    # define x as 200 evenly spaced values between the min and max of original x 
+    xnew = np.linspace(x.min(), x.max(), num) 
+
+    # define spline
+    spl = make_interp_spline(x, y, k=k)
+    y_smooth = spl(xnew)
+
+    # create smooth line chart 
+    plt.plot(xnew, y_smooth)
+
+
+def fitPlot(x, y):
+    pass
+
+
+# NOTE: Dont forget to fix the labels/title when changing the key
+keyToPlot = '%Expired' 
+
+x, y = getPoints(averageData, 50, keyToPlot)
+# plt.plot(x, y, marker='o') # plot line with points
+plt.plot(x, y, 'o')        # plot points
+smoothPlot(x, y)           # plot smooth line
+plt.xlabel('Ammount of Emergencies')
+plt.ylabel('Percentage of Expired Emergencies')
+plt.title('%Expired per #Emergencies')
+plt.show()
