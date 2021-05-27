@@ -13,6 +13,7 @@ class EvaluationMetrics:
 
         self.percentageExpiredEmergencies = 0
         self.expiredPerSeverity = ()
+        self.percentageExpiredLvl = []
         self.MRT = 0
         self.MRTperSeverity = ()
         self.fireEffort = []
@@ -23,6 +24,7 @@ class EvaluationMetrics:
 
     def evaluateGrid(self, grid):
         self.calculateExpiredEmergencies(grid)
+        self.calculateExpiredLvl(grid)
         self.calculateExpiredEmergenciesPerSeverity(grid)
         self.calculateMRT(grid)
         self.calculateMRTperSeverity(grid)
@@ -34,6 +36,16 @@ class EvaluationMetrics:
         totalEmergencies = len(grid.expiredEmergencies) + len(grid.answeredEmergencies)
         if totalEmergencies != 0:
             self.percentageExpiredEmergencies = round( len(grid.expiredEmergencies) / totalEmergencies * 100, 2 )
+
+    def calculateExpiredLvl(self, grid):
+        totalExpired = len(grid.expiredEmergencies)
+        expiredEmergencies = [0, 0, 0, 0]
+        self.percentageExpiredLvl = [0, 0, 0, 0]
+        if totalExpired == 0: return
+        for e in grid.expiredEmergencies:
+            expiredEmergencies[e.severityLevel - 1] += 1
+        for i in range(4):
+            self.percentageExpiredLvl[i] = round(expiredEmergencies[i] / totalExpired * 100, 2)
 
     def calculateExpiredEmergenciesPerSeverity(self, grid):
         totalEmergencies = [0,0,0,0]
@@ -114,12 +126,16 @@ class EvaluationMetrics:
 
         # Percentage expired emergencies
         print(" Percentage of Expired Emergencies ..... ", self.percentageExpiredEmergencies, "%")
+        print("  - Severity lvl.1 ..................... ", self.percentageExpiredLvl[0], "%")
+        print("  - Severity lvl.2 ..................... ", self.percentageExpiredLvl[1], "%")
+        print("  - Severity lvl.3 ..................... ", self.percentageExpiredLvl[2], "%")
+        print("  - Severity lvl.4 ..................... ", self.percentageExpiredLvl[3], "%")
 
         # Percentage expired emergencies per severity
-        print("  - Expired Severity lvl.1 ............. ", self.expiredPerSeverity[0], "%")
-        print("  - Expired Severity lvl.2 ............. ", self.expiredPerSeverity[1], "%")
-        print("  - Expired Severity lvl.3 ............. ", self.expiredPerSeverity[2], "%")
-        print("  - Expired Severity lvl.4 ............. ", self.expiredPerSeverity[3], "%")
+        print(" Percentage of Expired Severity lvl.1 .. ", self.expiredPerSeverity[0], "%")
+        print(" Percentage of Expired Severity lvl.2 .. ", self.expiredPerSeverity[1], "%")
+        print(" Percentage of Expired Severity lvl.3 .. ", self.expiredPerSeverity[2], "%")
+        print(" Percentage of Expired Severity lvl.4 .. ", self.expiredPerSeverity[3], "%")
         
         # MRT
         print(" Mean Response Time .................... ", self.MRT, "s")

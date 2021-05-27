@@ -61,6 +61,8 @@ def do_step():
     grid.step()
     print(grid.toString())
 
+    # guiInstance.updateBoard()
+
     # print("board updated")
     delta = time.time() - start
     print(delta)
@@ -78,30 +80,31 @@ grid = Grid(10, 10)
 maxSteps = 50
 
 # agent type
-reactive = True
+reactive = False
 deliberative = False
-deliberativeSocial = False
+deliberativeSocial = True
 if [reactive, deliberative, deliberativeSocial].count(True) != 1:
     print("Agent type not correctly specified!\n")
     exit()
 
 # create agents
-NUMUNITS = 7
+NUMUNITS1 = 7
+NUMUNITS2 = 7
 reactiveAgents = [
-    ReactiveFireStation((2, 3), NUMUNITS),
-    ReactiveFireStation((7, 8), NUMUNITS),
-    ReactiveHospital((4, 1), NUMUNITS),
-    ReactiveHospital((3, 8), NUMUNITS),
-    ReactivePoliceStation((8, 4), NUMUNITS),
-    ReactivePoliceStation((1, 6), NUMUNITS)
+    ReactiveFireStation((2, 3), NUMUNITS1),
+    ReactiveFireStation((7, 8), NUMUNITS2),
+    ReactiveHospital((4, 1), NUMUNITS1),
+    ReactiveHospital((3, 8), NUMUNITS2),
+    ReactivePoliceStation((8, 4), NUMUNITS1),
+    ReactivePoliceStation((1, 6), NUMUNITS2)
 ]
 deliberativeAgents = [
-    DeliberativeFireStation((2, 3), NUMUNITS),
-    DeliberativeFireStation((7, 8), NUMUNITS),
-    DeliberativeHospital((4, 1), NUMUNITS),
-    DeliberativeHospital((3, 8), NUMUNITS),
-    DeliberativePoliceStation((8, 4), NUMUNITS),
-    DeliberativePoliceStation((1, 6), NUMUNITS)
+    DeliberativeFireStation((2, 3), NUMUNITS1),
+    DeliberativeFireStation((7, 8), NUMUNITS2),
+    DeliberativeHospital((4, 1), NUMUNITS1),
+    DeliberativeHospital((3, 8), NUMUNITS2),
+    DeliberativePoliceStation((8, 4), NUMUNITS1),
+    DeliberativePoliceStation((1, 6), NUMUNITS2)
 ]
 
 if deliberativeSocial:

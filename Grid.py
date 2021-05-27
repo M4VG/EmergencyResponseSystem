@@ -136,7 +136,7 @@ class Grid:
                 police = random.choice([True, False])
 
             # define emergency severity
-            severity = random.randint(1, 4)
+            severity = random.choices([1, 2, 3, 4], weights=[0.3, 0.3, 0.25, 0.15])[0]
 
             # create emergency
             emergency = Emergency(position, fire, medical, police, severity)
