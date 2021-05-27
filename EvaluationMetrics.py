@@ -18,6 +18,8 @@ class EvaluationMetrics:
         self.fireEffort = []
         self.hospitalsEffort = []
         self.policeEffort = []
+        self.agentUnits = []
+        self.callsForHelp = []
 
     def evaluateGrid(self, grid):
         self.calculateExpiredEmergencies(grid)
@@ -25,6 +27,7 @@ class EvaluationMetrics:
         self.calculateMRT(grid)
         self.calculateMRTperSeverity(grid)
         self.calculateDistributionOfEffort(grid)
+        self.calculateCallsForHelp(grid)
         self.printMetrics()
 
     def calculateExpiredEmergencies(self, grid):
@@ -97,7 +100,10 @@ class EvaluationMetrics:
                 self.policeEffort.append(0)
                 continue
             self.policeEffort.append( round( a.answeredEmergencies / total * 100, 2) )
-        
+
+    def calculateCallsForHelp(self, grid):
+        for a in grid.getAllAgents():
+            self.callsForHelp.append(a.helpCalls)
 
     def printMetrics(self):
         # General
@@ -129,7 +135,10 @@ class EvaluationMetrics:
         print("  - Fire stations ...................... ", self.fireEffort, "%")
         print("  - Hospitals .......................... ", self.hospitalsEffort, "%")
         print("  - Police stations .................... ", self.policeEffort, "%")
-               
+
+        # Calls for help
+        print(" Calls for help per agent .............. ", self.callsForHelp)
+
 
     def saveStatistics(self, nruns):
 

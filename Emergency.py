@@ -19,7 +19,7 @@ class Emergency:
         self.totalRemainingUnits = self.fire + self.medical + self.police   # needed to mark emergency as answered only
                                                                             # when all units arrive
         # time limit calculated based on emergency characteristics
-        self.stepsRemaining = 12 + ([fire, medical, police].count(True) * 4) - (2 * severityLevel)
+        self.stepsRemaining = 14 + ([fire, medical, police].count(True) * 4) - (2 * severityLevel)
 
         self.assigned = False  # if agents already assigned to help
 

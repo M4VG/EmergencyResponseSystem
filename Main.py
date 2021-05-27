@@ -78,29 +78,30 @@ grid = Grid(10, 10)
 maxSteps = 50
 
 # agent type
-reactive = False
+reactive = True
 deliberative = False
-deliberativeSocial = True
+deliberativeSocial = False
 if [reactive, deliberative, deliberativeSocial].count(True) != 1:
     print("Agent type not correctly specified!\n")
     exit()
 
 # create agents
+NUMUNITS = 7
 reactiveAgents = [
-    ReactiveFireStation((2, 3), 6),
-    ReactiveFireStation((7, 8), 6),
-    ReactiveHospital((4, 1), 6),
-    ReactiveHospital((3, 8), 6),
-    ReactivePoliceStation((8, 4), 6),
-    ReactivePoliceStation((1, 6), 6)
+    ReactiveFireStation((2, 3), NUMUNITS),
+    ReactiveFireStation((7, 8), NUMUNITS),
+    ReactiveHospital((4, 1), NUMUNITS),
+    ReactiveHospital((3, 8), NUMUNITS),
+    ReactivePoliceStation((8, 4), NUMUNITS),
+    ReactivePoliceStation((1, 6), NUMUNITS)
 ]
 deliberativeAgents = [
-    DeliberativeFireStation((2, 3), 6),
-    DeliberativeFireStation((7, 8), 6),
-    DeliberativeHospital((4, 1), 6),
-    DeliberativeHospital((3, 8), 6),
-    DeliberativePoliceStation((8, 4), 6),
-    DeliberativePoliceStation((1, 6), 6)
+    DeliberativeFireStation((2, 3), NUMUNITS),
+    DeliberativeFireStation((7, 8), NUMUNITS),
+    DeliberativeHospital((4, 1), NUMUNITS),
+    DeliberativeHospital((3, 8), NUMUNITS),
+    DeliberativePoliceStation((8, 4), NUMUNITS),
+    DeliberativePoliceStation((1, 6), NUMUNITS)
 ]
 
 if deliberativeSocial:

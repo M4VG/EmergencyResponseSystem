@@ -35,7 +35,9 @@ class Agent:
 
         self.halt = False
 
+        # metrics
         self.answeredEmergencies = 0
+        self.helpCalls = 0
 
     def stop(self):
         self.halt = True
@@ -54,6 +56,7 @@ class Agent:
             if unit.isFree():
                 units.append(unit)
         return units
+
 
     # --------------- Actuators --------------- #
 
@@ -249,10 +252,10 @@ class DeliberativeAgent(Agent):
 
             # separate dispatch desires by severity level
             elif action == AgentActions.DISPATCH:
+                stepsNeeded = abs(emergency.position[0]-self.position[0]) + abs(emergency.position[1]-self.position[1]) + 1
 
-                # exclude emergencies which probably cant be answered on time - calculate distance or simply use heuristic?
-                # FIXME : change to a more accurate heuristic ?
-                if emergency.stepsRemaining <= 5:
+                # exclude emergencies which cant be answered on time
+                if emergency.stepsRemaining <= stepsNeeded:
                     continue
 
                 # keep priority lists ordered by time remaining
@@ -349,6 +352,7 @@ class DeliberativeAgent(Agent):
                 self.sendUnits(emergency, numUnits)
                 print(f'[ASK_HELP] Sent {numUnits} units to emergency at {emergency.position}.')
                 self.dispatchedEmergencies.append(emergency)
+                self.helpCalls += 1
 
     def run(self):
 
