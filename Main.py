@@ -78,10 +78,10 @@ grid = Grid(10, 10)
 maxSteps = 50
 
 # agent type
-reactive = True
+reactive = False
 deliberative = False
-deliberativeSocial = False
-if int(reactive) + int(deliberative) + int(deliberativeSocial) != 1:
+deliberativeSocial = True
+if [reactive, deliberative, deliberativeSocial].count(True) != 1:
     print("Agent type not correctly specified!\n")
     exit()
 
