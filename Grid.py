@@ -171,6 +171,9 @@ class Grid:
             else:
                 emergency.step()
 
+        for agent in self.getAllAgents():
+            for unit in agent.units: unit.step()
+
     def toString(self):
         string = '\n====== GRID STATUS ======\n\n'
         for row in self.grid:

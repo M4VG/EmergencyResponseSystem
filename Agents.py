@@ -1,8 +1,7 @@
 
 from enum import Enum
-import time
 import math
-from threading import Thread, Lock
+from threading import Lock
 
 
 class AgentType(Enum):
@@ -27,7 +26,6 @@ class Agent:
         self.position = position    # position on the grid
 
         self.units = [ResponseUnit(agentType, position) for _ in range(numberOfUnits)]  # array of units
-        self.unitThreads = [Thread(target=unit.run) for unit in self.units]
 
         self.assignedEmergencies = []           # new emergencies assigned to agent
         self.assignedEmergenciesCopy = []
@@ -39,14 +37,8 @@ class Agent:
 
         self.answeredEmergencies = 0
 
-    def startUnits(self):
-        for thread in self.unitThreads:
-            thread.start()
-
     def stop(self):
         self.halt = True
-        for unit in self.units:
-            unit.stop()
 
     def assignEmergency(self, emergency):
         with self.assignedEmergenciesLock:
@@ -445,12 +437,8 @@ class ResponseUnit:
         self.currentPosition = homePosition
         self.homePosition = homePosition
         self.goalEmergency = None
-        self.halt = False
         self.goalEmergencyLock = Lock()     # concurrency lock
         self.currentPositionLock = Lock()   # concurrency lock
-
-    def stop(self):
-        self.halt = True
 
     def isActive(self):
         return not self.isFree()
@@ -506,37 +494,27 @@ class ResponseUnit:
         currentPosition = self.getCurrentPosition()
         self.setCurrentPosition((currentPosition[0], currentPosition[1] - 1))
 
-    def run(self):
+    def step(self):
 
         # print("unit running")
 
-        while not self.halt:
+        if self.isActive():
 
-            start = time.time()
+            if self.reachedEmergency():
+                self.getGoalEmergency().answer()
+                self.setEmergency(None)
 
-            if self.isActive():
-
-                if self.reachedEmergency():
-                    self.getGoalEmergency().answer()
-                    self.setEmergency(None)
-
-                else:
-                    goalPosition = self.getGoalPosition()
-                    currentPosition = self.getCurrentPosition()
-                    distanceX = goalPosition[0] - currentPosition[0]
-                    distanceY = goalPosition[1] - currentPosition[1]
-
-                    if distanceX > 0:
-                        self.moveRight()
-                    elif distanceX < 0:
-                        self.moveLeft()
-                    elif distanceY > 0:
-                        self.moveUp()
-                    elif distanceY < 0:
-                        self.moveDown()
-
-            delta = time.time() - start
-            if delta < 1:
-                time.sleep(1 - delta)
             else:
-                print("UNIT DELTA TOO LONG")
+                goalPosition = self.getGoalPosition()
+                currentPosition = self.getCurrentPosition()
+                distanceX = goalPosition[0] - currentPosition[0]
+                distanceY = goalPosition[1] - currentPosition[1]
+
+                if distanceX > 0:
+                    self.moveRight()
+                elif distanceX < 0:
+                    self.moveLeft()
+                elif distanceY > 0:
+                    self.moveUp()
+                elif distanceY < 0:
+                    self.moveDown()

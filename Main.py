@@ -50,9 +50,6 @@ def run():
 def startAgents():
     for thread in agentThreads:
         thread.start()
-    for agent in agents:
-        agent.startUnits()
-
 
 def stopAgents():
     for agent in agents:
@@ -73,11 +70,20 @@ def do_step():
         print("-------------------- DELTA TOO LONG ------------------------")
     print()
 
+
 # --------------- Main program execution --------------- #
 
 # create grid
 grid = Grid(10, 10)
 maxSteps = 50
+
+# agent type
+reactive = True
+deliberative = False
+deliberativeSocial = False
+if int(reactive) + int(deliberative) + int(deliberativeSocial) != 1:
+    print("Agent type not correctly specified!\n")
+    exit()
 
 # create agents
 reactiveAgents = [
@@ -97,9 +103,7 @@ deliberativeAgents = [
     DeliberativePoliceStation((1, 6), 6)
 ]
 
-social = False
-#social = True
-if social:
+if deliberativeSocial:
     # add references to each others
     agentCount = len(deliberativeAgents)
     for iCurrent in range(agentCount):
@@ -108,10 +112,9 @@ if social:
                 continue
             deliberativeAgents[iCurrent].addAgent(deliberativeAgents[iAppend])
 
-agents = reactiveAgents
-#agents = deliberativeAgents
-agentThreads = []
+agents = reactiveAgents if reactive else deliberativeAgents
 
+agentThreads = []
 # add agents to grid and create agent threads
 for agent in agents:
     grid.addDispatcher(agent)
@@ -127,6 +130,9 @@ for agent in agents:
 run()
 
 print()
+if reactive: print("[REACTIVE AGENT]")
+elif deliberative: print("[DELIBERATIVE AGENT WITHOUT COMMUNICATION]")
+else: print("[DELIBERATIVE AGENT WITH COMMUNICATION]")
 evaluationSystem = EvaluationMetrics(grid)
 evaluationSystem.evaluateGrid(grid)
 evaluationSystem.saveStatistics(maxSteps)
