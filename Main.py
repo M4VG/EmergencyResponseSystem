@@ -17,35 +17,24 @@ def run():
     startAgents()
 
     while step < maxSteps:
-
-        print("STEP ", step)
-        # start timer
-        start = time.time()
-
-        # print("main cycle started")
-
-        # if step % 2 == 0:
-        grid.step()
-        print(grid.toString())
-
-        # print("grid updated")
-
         try:
-            # guiInstance.updateBoard()
-            pass
+            print("STEP ", step)
+            do_step()
+            step += 1
         except TclError:
             break
 
-        # print("board updated")
+    grid.stopEmergencies()
 
-        step += 1
-        delta = time.time() - start
-        print(delta)
-        if delta < 1:
-            time.sleep(1 - delta)
-        else:
-            print("-------------------- DELTA TOO LONG ------------------------")
-        print()
+    print("Finished steps, will keep running until there are no more emergencies.\n")
+
+    while len(grid.activeEmergencies) > 0:
+        try:
+            print("STEP ", step)
+            do_step()
+            step += 1
+        except TclError:
+            break        
 
     stopAgents()
 
@@ -58,7 +47,6 @@ def run():
 
     print("Simulation over.")
 
-
 def startAgents():
     for thread in agentThreads:
         thread.start()
@@ -70,6 +58,20 @@ def stopAgents():
     for agent in agents:
         agent.stop()
 
+def do_step():
+    # start timer
+    start = time.time()
+    grid.step()
+    print(grid.toString())
+
+    # print("board updated")
+    delta = time.time() - start
+    print(delta)
+    if delta < 1:
+        time.sleep(1 - delta)
+    else:
+        print("-------------------- DELTA TOO LONG ------------------------")
+    print()
 
 # --------------- Main program execution --------------- #
 
@@ -95,8 +97,8 @@ deliberativeAgents = [
     DeliberativePoliceStation((1, 6), 6)
 ]
 
-# social = False
-social = True
+social = False
+#social = True
 if social:
     # add references to each others
     agentCount = len(deliberativeAgents)
@@ -106,8 +108,8 @@ if social:
                 continue
             deliberativeAgents[iCurrent].addAgent(deliberativeAgents[iAppend])
 
-# agents = reactiveAgents
-agents = deliberativeAgents
+agents = reactiveAgents
+#agents = deliberativeAgents
 agentThreads = []
 
 # add agents to grid and create agent threads

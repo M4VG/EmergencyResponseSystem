@@ -21,6 +21,11 @@ class Grid:
         self.answeredEmergencies = []
         self.expiredEmergencies = []
 
+        self.halt = False
+
+    def stopEmergencies(self):
+        self.halt = True
+
     def getAllAgents(self):
         return self.fireStations + self.hospitals + self.policeStations
 
@@ -115,7 +120,7 @@ class Grid:
     def spawnEmergencies(self):
 
         # decide how many emergencies to spawn
-        emergencies = random.choice([0, 1, 2])
+        emergencies = random.choices([0, 1, 2], weights=[0.4, 0.4, 0.2])[0]
 
         for _ in range(emergencies):
 
@@ -140,7 +145,8 @@ class Grid:
     
     def step(self):
 
-        self.spawnEmergencies()
+        if (not self.halt):
+            self.spawnEmergencies()
 
         for emergency in self.activeEmergencies:
             # check for answered emergencies

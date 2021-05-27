@@ -11,24 +11,45 @@ class EvaluationMetrics:
         self.answeredEmergencies = len(grid.answeredEmergencies)
         self.expiredEmergencies = len(grid.expiredEmergencies)
 
+        self.percentageExpiredEmergencies = 0
+        self.expiredPerSeverity = ()
         self.MRT = 0
         self.MRTperSeverity = ()
-        self.percentageExpiredEmergencies = 0
         self.fireEffort = []
         self.hospitalsEffort = []
         self.policeEffort = []
 
     def evaluateGrid(self, grid):
+        self.calculateExpiredEmergencies(grid)
+        self.calculateExpiredEmergenciesPerSeverity(grid)
         self.calculateMRT(grid)
         self.calculateMRTperSeverity(grid)
-        self.calculateExpiredEmergencies(grid)
         self.calculateDistributionOfEffort(grid)
         self.printMetrics()
+
+    def calculateExpiredEmergencies(self, grid):
+        totalEmergencies = len(grid.expiredEmergencies) + len(grid.answeredEmergencies)
+        if totalEmergencies != 0:
+            self.percentageExpiredEmergencies = round( len(grid.expiredEmergencies) / totalEmergencies * 100, 2 )
+
+    def calculateExpiredEmergenciesPerSeverity(self, grid):
+        totalEmergencies = [0,0,0,0]
+        expiredEmergencies = [0,0,0,0]
+        expiredPerSeverity = [0,0,0,0]
+        for e in grid.answeredEmergencies:
+            totalEmergencies[e.severityLevel - 1] += 1
+        for e in grid.expiredEmergencies:
+            totalEmergencies[e.severityLevel - 1] += 1
+            expiredEmergencies[e.severityLevel - 1] += 1
+        for i in range(4):
+            if totalEmergencies[i] != 0:
+                expiredPerSeverity[i] = round( expiredEmergencies[i] / totalEmergencies[i] * 100, 2)
+        self.expiredPerSeverity = tuple(expiredPerSeverity)
 
     def calculateMRT(self, grid):
         total = 0
         for e in grid.answeredEmergencies:
-            total += e.responseTime #FIXME what to do with active and expired?
+            total += e.responseTime
         if len(grid.answeredEmergencies) != 0:
             self.MRT = round( total / len(grid.answeredEmergencies), 2)
 
@@ -45,12 +66,6 @@ class EvaluationMetrics:
                 continue
             MRTperSeverity.append( round( totalTime[i] / count[i], 2) )
         self.MRTperSeverity = tuple(MRTperSeverity)
-            
-
-    def calculateExpiredEmergencies(self, grid):
-        totalEmergencies = len(grid.expiredEmergencies) + len(grid.answeredEmergencies) #FIXME do active emergencies count?
-        if totalEmergencies != 0:
-            self.percentageExpiredEmergencies = round( len(grid.expiredEmergencies) / totalEmergencies * 100, 2 )
 
     def calculateDistributionOfEffort(self, grid):
         # fire
@@ -93,6 +108,12 @@ class EvaluationMetrics:
 
         # Percentage expired emergencies
         print(" Percentage of Expired Emergencies ..... ", self.percentageExpiredEmergencies, "%")
+
+        # Percentage expired emergencies per severity
+        print("  - Expired Severity lvl.1 ............. ", self.expiredPerSeverity[0], "%")
+        print("  - Expired Severity lvl.2 ............. ", self.expiredPerSeverity[1], "%")
+        print("  - Expired Severity lvl.3 ............. ", self.expiredPerSeverity[2], "%")
+        print("  - Expired Severity lvl.4 ............. ", self.expiredPerSeverity[3], "%")
         
         # MRT
         print(" Mean Response Time .................... ", self.MRT, "s")
