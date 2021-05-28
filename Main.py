@@ -121,7 +121,7 @@ if len(sys.argv) == 3:
 
 # create grid
 grid = Grid(10, 10)
-maxSteps = 10
+maxSteps = 100
 
 # create agents
 NUMUNITS1 = 8
