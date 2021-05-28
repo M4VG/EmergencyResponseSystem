@@ -73,19 +73,39 @@ def do_step():
     print()
 
 
-# --------------- Main program execution --------------- #
+
+# --------------- command-line arguments --------------- #
+
+if len(sys.argv) != 3:
+    print('Please indicate the type of the agent.')
+    print('Please indicate the name of the csv file.')
+    sys.exit(1) # error
+
+reactive = False
+deliberative = False
+deliberativeSocial = False
+
+if sys.argv[1].lower() == 'r':
+    reactive = True
+elif sys.argv[1].lower() == 'd':
+    deliberative = True
+elif sys.argv[1].lower() == 'dc':
+    deliberativeSocial = True
+else:
+    print('Agent type not correctly specified.')
+    sys.exit(1) # error
+
+if sys.argv[2].endswith('.csv'):
+    csv_file = sys.argv[2]
+else:
+    csv_file = sys.argv[2] + '.csv'
+
+
+# --------------- main program execution --------------- #
 
 # create grid
 grid = Grid(10, 10)
 maxSteps = 50
-
-# agent type
-reactive = False
-deliberative = False
-deliberativeSocial = True
-if [reactive, deliberative, deliberativeSocial].count(True) != 1:
-    print("Agent type not correctly specified!\n")
-    exit()
 
 # create agents
 NUMUNITS1 = 7
@@ -139,5 +159,5 @@ elif deliberative: print("[DELIBERATIVE AGENT WITHOUT COMMUNICATION]")
 else: print("[DELIBERATIVE AGENT WITH COMMUNICATION]")
 evaluationSystem = EvaluationMetrics(grid)
 evaluationSystem.evaluateGrid(grid)
-evaluationSystem.saveStatistics(maxSteps)
+evaluationSystem.saveStatistics(csv_file, maxSteps)
 print()

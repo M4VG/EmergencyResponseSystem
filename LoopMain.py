@@ -2,9 +2,11 @@
 
 import subprocess
 
-currentRun = 1
-while(True):
-    print('Current run:', currentRun)
-    subprocess.run('python3 Main.py', stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
-    currentRun += 1
+N_RUNS = 100
 
+for agent in ['r', 'd', 'dc']:
+    for i in range(N_RUNS):
+        print('Current run:', agent, i+1)
+        subprocess.run(f'python3 Main.py {agent} {agent}', stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
+
+print('Done!')
