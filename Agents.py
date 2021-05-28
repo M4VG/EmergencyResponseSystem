@@ -39,6 +39,24 @@ class Agent:
         self.answeredEmergencies = 0
         self.helpCalls = 0
 
+    def typeToString(self):
+        typeString = None
+        if self.type == AgentType.FIRE:
+            typeString = 'Fire Department'
+        elif self.type == AgentType.MEDICAL:
+            typeString = 'Hospital'
+        elif self.type == AgentType.POLICE:
+            typeString = 'Police Station'
+        return typeString
+
+    def dispatchString(self, numUnits, emergency):
+        return f'Action of {self.typeToString()} at position {self.position}:\n' \
+            f'[DISPATCH] Sent {numUnits} units to emergency at {emergency.position}.\n'
+    
+    def retrieveString(self, emergency):
+        return f'Action of {self.typeToString()} at position {self.position}:\n' \
+            f'[RETRIEVE] Called back units from the emergency at {emergency.position}.\n'
+
     def stop(self):
         self.halt = True
 
@@ -109,6 +127,7 @@ class ReactiveAgent(Agent):
             if len(self.expiredEmergencies) > 0:    # retrieve
                 emergency = self.expiredEmergencies.pop(0)
                 self.retrieveUnits(emergency)
+                print(self.retrieveString(emergency))
 
             elif len(self.findFreeUnits()) > 0 and len(self.assignedEmergenciesCopy) > 0:
                 emergency = self.assignedEmergenciesCopy[0]
@@ -117,33 +136,12 @@ class ReactiveAgent(Agent):
 
                 if numFreeUnits < numNeededUnits:
                     self.sendUnits(emergency, numFreeUnits)
+                    print(self.dispatchString(numFreeUnits, emergency))
                 else:
                     self.sendUnits(emergency, numNeededUnits)
                     self.removeAssignedEmergency(emergency)
                     self.dispatchedEmergencies.append(emergency)
-
-
-            '''
-            # send available units to assigned emergencies
-            numFreeUnits = len(self.findFreeUnits())
-            numEmergencies = len(self.assignedEmergenciesCopy)
-            i = 0
-
-            while numFreeUnits > 0 and i < numEmergencies:
-                emergency = self.assignedEmergenciesCopy[i]
-                numNeededUnits = emergency.getNeededUnits(self.type)
-
-                if numFreeUnits < numNeededUnits:
-                    self.sendUnits(emergency, numFreeUnits)
-                    numFreeUnits = 0
-                else:
-                    self.sendUnits(emergency, numNeededUnits)
-                    numFreeUnits -= numNeededUnits
-                    self.removeAssignedEmergency(emergency)
-                    self.dispatchedEmergencies.append(emergency)
-
-                i += 1
-            '''
+                    print(self.dispatchString(numNeededUnits, emergency))
 
 
 # ---------------- Deliberative agent class ---------------- #
@@ -166,6 +164,10 @@ class DeliberativeAgent(Agent):
 
     def addAgent(self, agent):
         self.otherAgents.append(agent)
+
+    def helpString(self, numUnits, emergency):
+        return f'Action of {self.typeToString()} at position {self.position}:\n' \
+            f'[ASK_HELP] Sent {numUnits} units to emergency at {emergency.position}.\n'
 
     def reconsider(self):
         # determines if the agent should reconsider its intentions
@@ -337,13 +339,13 @@ class DeliberativeAgent(Agent):
             if action == AgentActions.DISPATCH:
                 numUnits = intention[2]
                 self.sendUnits(emergency, numUnits)
-                print(f'[DISPATCH] Sent {numUnits} units to emergency at {emergency.position}.')
+                print(self.dispatchString(numUnits, emergency))
                 self.removeAssignedEmergency(emergency)
                 self.dispatchedEmergencies.append(emergency)
 
             elif action == AgentActions.RETRIEVE:
                 self.retrieveUnits(emergency)
-                print(f'[RETRIEVE] Called back units from the emergency at {emergency.position}.')
+                print(self.retrieveString(emergency))
                 self.expiredEmergencies.remove(emergency)
 
             elif action == AgentActions.ASK_HELP:
@@ -351,7 +353,7 @@ class DeliberativeAgent(Agent):
                 agent = intention[3]
                 agent.assignEmergency(emergency) # help request
                 self.sendUnits(emergency, numUnits)
-                print(f'[ASK_HELP] Sent {numUnits} units to emergency at {emergency.position}.')
+                print(self.helpString(numUnits, emergency))
                 self.dispatchedEmergencies.append(emergency)
                 self.helpCalls += 1
 

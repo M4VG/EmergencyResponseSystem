@@ -16,8 +16,9 @@ class Emergency:
         self.fire = neededUnits if fire else 0
         self.medical = neededUnits if medical else 0
         self.police = neededUnits if police else 0
-        self.totalRemainingUnits = self.fire + self.medical + self.police   # needed to mark emergency as answered only
-                                                                            # when all units arrive
+        # needed to mark emergency as answered only when all units arrive
+        self.totalRemainingUnits = self.fire + self.medical + self.police   
+
         # time limit calculated based on emergency characteristics
         self.stepsRemaining = 14 + ([fire, medical, police].count(True) * 4) - (2 * severityLevel)
 

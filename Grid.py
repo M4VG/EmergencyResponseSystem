@@ -6,6 +6,8 @@ from Emergency import *
 
 class Grid:
 
+    UNIT_STR = '*'
+
     def __init__(self, rows, columns):
         # grid 
         self.grid = [['-' for _ in range(columns)] for _ in range(rows)]  # for printing
@@ -21,6 +23,9 @@ class Grid:
         self.answeredEmergencies = []
         self.expiredEmergencies = []
 
+        # agents' units
+        self.units = []
+
         self.halt = False
 
     def stopEmergencies(self):
@@ -35,13 +40,17 @@ class Grid:
     def positionFree(self, position):
         return self.grid[position[0]][position[1]] == '-'
 
+    def positionUnit(self, position):
+        return self.grid[position[0]][position[1]] == self.UNIT_STR
+
     def getRandomPosition(self):
         return tuple(random.randint(0, i-1) for i in self.size)
 
     def fullBoard(self):
         for row in self.grid:
             for element in row:
-                if element == '-'   : return False
+                if element == '-': 
+                    return False
         return True
 
     def getFreePosition(self):
@@ -60,6 +69,9 @@ class Grid:
     def clearPosition(self, position):
         self.grid[position[0]][position[1]] = '-'
 
+    def addAgentUnits(self, agent):
+        self.units.extend(agent.units)
+
     def addDispatcher(self, dispatcher):
         self.occupyPosition(dispatcher.position, dispatcher.toString())
 
@@ -69,6 +81,8 @@ class Grid:
             self.hospitals.append(dispatcher)
         elif dispatcher.type == AgentType.POLICE:
             self.policeStations.append(dispatcher)
+
+        self.addAgentUnits(dispatcher)
 
     def findNearestAgents(self, emergency):
         nearestAgents = [None, None, None]
@@ -171,15 +185,22 @@ class Grid:
             else:
                 emergency.step()
 
-        for agent in self.getAllAgents():
-            for unit in agent.units: unit.step()
+        for unit in self.units:
+            # this condition is to avoid clearing an agent or an emergency
+            if self.positionUnit(unit.currentPosition):
+                self.clearPosition(unit.currentPosition)
+
+            unit.step()
+
+            # this condition is to avoid a unit overwriting an agent or an emergency
+            if self.positionFree(unit.currentPosition):
+                self.occupyPosition(unit.currentPosition, self.UNIT_STR)
 
     def toString(self):
-        string = '\n====== GRID STATUS ======\n\n'
+        string  = '\n======= GRID STATUS ========\n\n'
         for row in self.grid:
             for element in row:
                 string += element + '  '
             string += '\n'
-        string += '\n' 
-        string += '\n=========================\n'
+        string += '\n============================\n'
         return string

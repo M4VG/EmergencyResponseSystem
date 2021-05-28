@@ -7,9 +7,17 @@ from threading import Thread
 import time
 from tkinter import TclError
 import sys
+import os
+import platform
 
 # main function - create grid and agents, function step to advance time
 
+if platform.system() == 'Linux':
+    clear = lambda: os.system('clear')
+elif platform.system() == 'Windows':
+    clear = lambda: os.system('cls')
+else:
+    clear = lambda: None
 
 def run():
 
@@ -18,6 +26,7 @@ def run():
 
     while step < maxSteps:
         try:
+            #clear()
             print("STEP ", step)
             do_step()
             step += 1
@@ -30,6 +39,7 @@ def run():
 
     while len(grid.activeEmergencies) > 0:
         try:
+            #clear()
             print("STEP ", step)
             do_step()
             step += 1
@@ -45,6 +55,7 @@ def run():
     except TclError:
         pass
 
+    #clear()
     print("Simulation over.")
 
 def startAgents():
@@ -65,18 +76,19 @@ def do_step():
 
     # print("board updated")
     delta = time.time() - start
-    print(delta)
+    # print(delta)
     if delta < 1:
         time.sleep(1 - delta)
     else:
-        print("-------------------- DELTA TOO LONG ------------------------")
+        # print("-------------------- DELTA TOO LONG ------------------------")
+        pass
     print()
 
 
 
 # --------------- command-line arguments --------------- #
 
-if len(sys.argv) != 3:
+if len(sys.argv) not in (2, 3):
     print('Please indicate the type of the agent.')
     print('Please indicate the name of the csv file.')
     sys.exit(1) # error
@@ -95,17 +107,21 @@ else:
     print('Agent type not correctly specified.')
     sys.exit(1) # error
 
-if sys.argv[2].endswith('.csv'):
-    csv_file = sys.argv[2]
-else:
-    csv_file = sys.argv[2] + '.csv'
+csv_file = None
+
+# if a csv file was specified
+if len(sys.argv) == 3:
+    if sys.argv[2].endswith('.csv'):
+        csv_file = sys.argv[2]
+    else:
+        csv_file = sys.argv[2] + '.csv'
 
 
 # --------------- main program execution --------------- #
 
 # create grid
 grid = Grid(10, 10)
-maxSteps = 100
+maxSteps = 10
 
 # create agents
 NUMUNITS1 = 8
@@ -159,5 +175,5 @@ elif deliberative: print("[DELIBERATIVE AGENT WITHOUT COMMUNICATION]")
 else: print("[DELIBERATIVE AGENT WITH COMMUNICATION]")
 evaluationSystem = EvaluationMetrics(grid)
 evaluationSystem.evaluateGrid(grid)
-evaluationSystem.saveStatistics(csv_file, maxSteps)
+if csv_file != None: evaluationSystem.saveStatistics(csv_file, maxSteps)
 print()
