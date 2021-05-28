@@ -155,7 +155,7 @@ class Grid:
             # create emergency
             emergency = Emergency(position, fire, medical, police, severity)
             self.addEmergency(emergency)
-            print('New emergency: fire', emergency.fire, 'medical', emergency.medical, 'police', emergency.police)
+            print('New emergency: fire', bool(emergency.fire), 'medical', bool(emergency.medical), 'police', bool(emergency.police))
     
     def step(self):
 
@@ -168,13 +168,14 @@ class Grid:
                 self.activeEmergencies.remove(emergency)
                 self.answeredEmergencies.append(emergency)
                 self.clearPosition(emergency.position)
-                print(">>> emergency answered")
+                print("> Emergency at ", emergency.position, " answered")
 
             # check for expired emergencies
             elif emergency.isExpired():
                 self.activeEmergencies.remove(emergency)
                 self.expiredEmergencies.append(emergency)
                 self.clearPosition(emergency.position)
+                print("> Emergency at ", emergency.position, " expired")
 
             # check for unassigned emergencies
             elif not emergency.isAssigned():

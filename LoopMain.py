@@ -1,7 +1,7 @@
 
 import subprocess
 
-N_RUNS = 10
+N_RUNS = 25
 
 for agent in ['dc']:
     for i in range(N_RUNS):

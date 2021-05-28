@@ -308,7 +308,7 @@ class DeliberativeAgent(Agent):
                 continue
             distance = math.sqrt((agent.position[0] - emergency.position[0]) ** 2 + (agent.position[1] - emergency.position[1]) ** 2)
             # FIXME : mutex units ?
-            if distance < minDistance and len(agent.findFreeUnits()) >= neededUnits:
+            if distance < minDistance:
                 minDistance = distance
                 closestAgent = agent
         return closestAgent
