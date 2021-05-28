@@ -291,10 +291,6 @@ class DeliberativeAgent(Agent):
                 agent = self.findClosestAgent(emergency, remainingUnits)
 
                 if agent is not None:
-
-                    # FIXME : split unit usage according to relative percentage of the total units ?
-                    #       : EX. need 3 | 2 free and 4 remain | send 1 and ask for 2, dont send 2 and ask for 1
-
                     askForHelp = (AgentActions.ASK_HELP, emergency, numFreeUnits, agent)
                     self.intentions.append(askForHelp)
                     numFreeUnits -= numFreeUnits
@@ -307,7 +303,6 @@ class DeliberativeAgent(Agent):
             if agent.type != self.type:
                 continue
             distance = math.sqrt((agent.position[0] - emergency.position[0]) ** 2 + (agent.position[1] - emergency.position[1]) ** 2)
-            # FIXME : mutex units ?
             if distance < minDistance:
                 minDistance = distance
                 closestAgent = agent

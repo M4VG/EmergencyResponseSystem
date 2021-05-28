@@ -90,7 +90,6 @@ class GUI:
         ))
 
     def agentText(self, agent):
-        # FIXME : substitute with Agent toString method -> def __str__(self):
         if agent == AgentType.FIRE:
             return 'F'  # Fire Station
         elif agent == AgentType.MEDICAL:
