@@ -105,11 +105,11 @@ else:
 
 # create grid
 grid = Grid(10, 10)
-maxSteps = 50
+maxSteps = 100
 
 # create agents
-NUMUNITS1 = 7
-NUMUNITS2 = 7
+NUMUNITS1 = 8
+NUMUNITS2 = 6
 reactiveAgents = [
     ReactiveFireStation((2, 3), NUMUNITS1),
     ReactiveFireStation((7, 8), NUMUNITS2),
@@ -145,9 +145,9 @@ for agent in agents:
     agentThreads.append(Thread(target=agent.run))
 
 # create GUI
-allUnits = []
-for agent in agents:
-    allUnits += agent.units
+# allUnits = []
+# for agent in agents:
+#     allUnits += agent.units
 # guiInstance = GUI(grid, allUnits)
 
 # run simulation
