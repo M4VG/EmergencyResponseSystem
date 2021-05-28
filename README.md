@@ -17,6 +17,6 @@ An agent can be one out of three types:
 
 > A Social Deliberative agent is a Deliberative agent capable of communicating with other agents.
 
-That sair, the placeholder <agent_type> should be either *r* (Reactive), *d* (Deliberative), or *dc* (Deliberative w/ Communication).
+The placeholder <agent_type> should be either *r* (Reactive), *d* (Deliberative), or *dc* (Deliberative w/ Communication).
 
 The optional placeholder [csv_file] is needed if one desires to save the results of a simulation. It should be replaced with the filename of the .csv file in which the results will be stored.
