@@ -82,7 +82,8 @@ def convertToFloat(dictionary):
     for key in dictionary:
         if key == 'Help':
             value = dictionary['Help']
-            dictionary['Help'] = list( map(float, value.strip('][').split(' ')) )
+            str_list = list( filter(None, value.strip('][').split(' ')) )
+            dictionary['Help'] = list(map(float, str_list))
         else:
             dictionary[key] = float(dictionary[key])
     return dictionary
@@ -142,7 +143,6 @@ def mrtPerSeverity(r, d, dc):
 
 
 def expiredPerSeverity(r, d, dc):
-    # Expired1Percentage
     data_r = [r['Expired1Percentage'], r['Expired2Percentage'], r['Expired3Percentage'], r['Expired4Percentage']]
     data_d = [d['Expired1Percentage'], d['Expired2Percentage'], d['Expired3Percentage'], d['Expired4Percentage']]
     data_dc = [dc['Expired1Percentage'], dc['Expired2Percentage'], dc['Expired3Percentage'], dc['Expired4Percentage']]
