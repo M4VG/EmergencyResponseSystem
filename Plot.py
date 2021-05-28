@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 
 def writeAverages(csv_file):
 
+    print('File Name:', csv_file)
+
     ### 1. Read the samples and Store the averages
 
     with open(csv_file, newline='') as f:
