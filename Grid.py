@@ -145,7 +145,7 @@ class Grid:
     
     def step(self):
 
-        if (not self.halt):
+        if not self.halt:
             self.spawnEmergencies()
 
         for emergency in self.activeEmergencies:

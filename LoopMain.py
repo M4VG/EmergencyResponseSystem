@@ -1,9 +1,9 @@
 
 import subprocess
 
-N_RUNS = 50
+N_RUNS = 10
 
-for agent in ['r', 'd', 'dc']:
+for agent in ['dc']:
     for i in range(N_RUNS):
         print('Current run:', agent, i+1)
 

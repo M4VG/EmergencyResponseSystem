@@ -284,10 +284,11 @@ class DeliberativeAgent(Agent):
             # if not enough units but able to communicate, ask for help
             elif self.isSocial():
 
+                emergency = desire[1]
                 remainingUnits = neededUnits - numFreeUnits
-                agent = self.findClosestAgent(desire[1], remainingUnits)
+                agent = self.findClosestAgent(emergency, remainingUnits)
 
-                if agent != None:
+                if agent is not None:
 
                     # FIXME : split unit usage according to relative percentage of the total units ?
                     #       : EX. need 3 | 2 free and 4 remain | send 1 and ask for 2, dont send 2 and ask for 1
